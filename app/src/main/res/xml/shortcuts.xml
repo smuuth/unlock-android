@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Long-Press auf das App-Icon -->
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_paste"
+        android:shortcutId="clipboard"
+        android:shortcutLongLabel="@string/shortcut_clipboard_long"
+        android:shortcutShortLabel="@string/shortcut_clipboard_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="dev.unlock.share.ClipboardActivity"
+            android:targetPackage="dev.unlock" />
+    </shortcut>
+
+    <!-- Direct Share: dynamische Shortcuts dieser Kategorie (ShortcutPublisher) landen im Share-Sheet. -->
+    <share-target android:targetClass="dev.unlock.share.ShareActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="dev.unlock.category.ARCHIVE_TARGET" />
+    </share-target>
+</shortcuts>

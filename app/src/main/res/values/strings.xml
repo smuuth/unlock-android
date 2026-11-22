@@ -1,3 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Android Test App</string>
+    <string name="app_name" translatable="false">Unlock</string>
+    <string name="share_label">Unlock</string>
+
+    <string name="toast_no_link">No link found</string>
+    <string name="toast_no_browser">No browser available to open the link</string>
+
+    <string name="shortcut_newest">%1$s – newest</string>
+    <string name="shortcut_submit">%1$s – archive now</string>
+    <string name="shortcut_all">%1$s – all snapshots</string>
+    <string name="shortcut_wayback">Wayback Machine</string>
+    <string name="shortcut_clipboard_short">Open copied link</string>
+    <string name="shortcut_clipboard_long">Open link from clipboard</string>
+
+    <string name="subtitle">Read articles through web archives</string>
+    <string name="how_title">How it works</string>
+    <string name="how_step_share">Share a link from any app</string>
+    <string name="how_step_pick">Pick “Unlock”</string>
+    <string name="how_step_read">Read the archived version</string>
+    <string name="how_hint">Tip: You can also select a link and choose “Unlock” from the text menu.</string>
+
+    <string name="test_title">Try it</string>
+    <string name="test_field_label">Paste a link or text</string>
+    <string name="test_paste">Paste from clipboard</string>
+    <string name="test_clear">Clear</string>
+    <string name="test_open">Open</string>
+    <string name="test_preview">Opens: %1$s</string>
+    <string name="test_no_link">No link found in this text</string>
+
+    <string name="section_service">Archive service</string>
+    <string name="mode_title">Mode</string>
+    <string name="mode_newest">Newest</string>
+    <string name="mode_submit">Archive now</string>
+    <string name="mode_all">All snapshots</string>
+    <string name="mode_newest_desc">Opens the latest snapshot. Fastest option.</string>
+    <string name="mode_submit_desc">Creates a fresh snapshot. Takes longer and may show a captcha.</string>
+    <string name="mode_all_desc">Lists every snapshot archive.today has for the page.</string>
+    <string name="wayback_desc">Opens the Internet Archive’s latest capture of the page.</string>
+    <string name="domain_title">archive.today domain</string>
+    <string name="domain_desc">Switch if a domain is currently unreachable.</string>
+
+    <string name="section_behavior">Behavior</string>
+    <string name="setting_clean">Clean links</string>
+    <string name="setting_clean_desc">Remove tracking parameters and resolve redirects</string>
+    <string name="setting_amp">Prefer desktop pages</string>
+    <string name="setting_amp_desc">Turn AMP and mobile links (amp., m.) into normal pages</string>
+    <string name="setting_custom_tabs">Open in Custom Tab</string>
+    <string name="setting_custom_tabs_desc">Off: open in your default browser app</string>
+    <string name="setting_history">Remember history</string>
+    <string name="setting_history_desc">Keeps the last 20 links on this device only</string>
+
+    <string name="section_history">Recently opened</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_empty">Nothing here yet.</string>
+    <string name="history_open">Open again</string>
+
+    <string name="section_about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_privacy">Unlock collects no data. No internet permission, no analytics, no ads. Links are handed straight to your browser.</string>
+    <string name="about_archive">archive.today and the Wayback Machine are independent third-party services. They may show captchas, change domains or be temporarily unavailable.</string>
 </resources>

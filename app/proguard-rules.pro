@@ -1,1 +1,2 @@
-# Keep rules for release builds
+# Unlock nutzt keine Reflection; die Consumer-Regeln der AndroidX-Bibliotheken genügen.
+-renamesourcefileattribute SourceFile

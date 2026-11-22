@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AndroidTestApp"
+rootProject.name = "Unlock"
 include(":app")

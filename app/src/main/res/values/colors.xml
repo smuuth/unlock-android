@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="window_background">#FFFBF8FF</color>
+    <color name="fallback_toolbar_light">#FFEDE6FF</color>
+    <color name="fallback_toolbar_dark">#FF1B1A22</color>
+    <color name="icon_background">#FF4F3DBF</color>
+    <color name="icon_background_end">#FF7A5AF8</color>
+    <color name="icon_foreground">#FFFFFFFF</color>
+    <color name="shortcut_background">#FFE6DEFF</color>
+    <color name="shortcut_foreground">#FF3A2C8F</color>
+</resources>

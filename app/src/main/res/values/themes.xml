@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AndroidTestApp" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Plattform-Theme ohne AppCompat; Compose übernimmt das eigentliche Styling. -->
+    <style name="Theme.Unlock" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Für ClipboardActivity: unsichtbar, aber mit Fenster (Fokus nötig für Zwischenablage). -->
+    <style name="Theme.Unlock.Invisible" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>

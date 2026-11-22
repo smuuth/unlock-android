@@ -1,0 +1,101 @@
+package dev.unlock.settings
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dev.unlock.archive.ArchiveDomain
+import dev.unlock.archive.ArchiveTarget
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+/**
+ * Einstellungen + optionaler Verlauf in Jetpack DataStore.
+ *
+ * Für den Share-Pfad hält das Repository einen In-Memory-Cache, der beim
+ * Prozessstart im Hintergrund befüllt wird ([warmUp]). Nur wenn der Share-Intent
+ * schneller ist als dieses erste Lesen, wird einmalig per `runBlocking` gelesen
+ * (eine kleine Datei, wenige Millisekunden).
+ */
+class SettingsRepository(context: Context) {
+
+    private val store = context.applicationContext.dataStore
+
+    @Volatile
+    private var cached: Settings? = null
+
+    val settings: Flow<Settings> = store.data.map { it.toSettings() }.distinctUntilChanged()
+
+    val history: Flow<List<HistoryEntry>> = store.data.map { decodeHistory(it[Keys.HISTORY]) }.distinctUntilChanged()
+
+    fun warmUp(scope: CoroutineScope) {
+        settings.onEach { cached = it }.launchIn(scope)
+    }
+
+    /** Aktuelle Einstellungen für den Share-Pfad – blockiert höchstens beim allerersten Zugriff. */
+    fun current(): Settings = cached ?: runBlocking { settings.first() }.also { cached = it }
+
+    suspend fun setTarget(target: ArchiveTarget) = store.edit { it[Keys.TARGET] = target.id }
+    suspend fun setDomain(domain: ArchiveDomain) = store.edit { it[Keys.DOMAIN] = domain.host }
+    suspend fun setCleanUrls(value: Boolean) = store.edit { it[Keys.CLEAN] = value }
+    suspend fun setNormalizeAmp(value: Boolean) = store.edit { it[Keys.AMP] = value }
+    suspend fun setUseCustomTabs(value: Boolean) = store.edit { it[Keys.CUSTOM_TABS] = value }
+
+    suspend fun setHistoryEnabled(value: Boolean) = store.edit {
+        it[Keys.HISTORY_ENABLED] = value
+        // Beim Abschalten sofort alles verwerfen – nichts soll heimlich liegen bleiben.
+        if (!value) it.remove(Keys.HISTORY)
+    }
+
+    suspend fun addToHistory(url: String, now: Long = System.currentTimeMillis()) = store.edit { prefs ->
+        if (prefs[Keys.HISTORY_ENABLED] != true) return@edit
+        val entries = listOf(HistoryEntry(url, now)) + decodeHistory(prefs[Keys.HISTORY]).filter { it.url != url }
+        prefs[Keys.HISTORY] = encodeHistory(entries.take(MAX_HISTORY))
+    }
+
+    suspend fun clearHistory() = store.edit { it.remove(Keys.HISTORY) }
+
+    private fun Preferences.toSettings() = Settings(
+        target = ArchiveTarget.fromId(this[Keys.TARGET]) ?: ArchiveTarget.DEFAULT,
+        domain = ArchiveDomain.fromHost(this[Keys.DOMAIN]) ?: ArchiveDomain.DEFAULT,
+        cleanUrls = this[Keys.CLEAN] ?: true,
+        normalizeAmp = this[Keys.AMP] ?: false,
+        useCustomTabs = this[Keys.CUSTOM_TABS] ?: true,
+        historyEnabled = this[Keys.HISTORY_ENABLED] ?: false,
+    )
+
+    private object Keys {
+        val TARGET = stringPreferencesKey("target")
+        val DOMAIN = stringPreferencesKey("archive_domain")
+        val CLEAN = booleanPreferencesKey("clean_urls")
+        val AMP = booleanPreferencesKey("normalize_amp")
+        val CUSTOM_TABS = booleanPreferencesKey("custom_tabs")
+        val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
+        val HISTORY = stringPreferencesKey("history")
+    }
+
+    companion object {
+        const val MAX_HISTORY = 20
+
+        // Format: eine Zeile pro Eintrag, "<timestamp>\t<url>". URLs enthalten weder Tab noch Zeilenumbruch.
+        internal fun encodeHistory(entries: List<HistoryEntry>): String =
+            entries.joinToString("\n") { "${it.timestamp}\t${it.url}" }
+
+        internal fun decodeHistory(raw: String?): List<HistoryEntry> =
+            raw.orEmpty().lineSequence().mapNotNull { line ->
+                val ts = line.substringBefore('\t').toLongOrNull() ?: return@mapNotNull null
+                HistoryEntry(line.substringAfter('\t'), ts)
+            }.toList()
+    }
+}

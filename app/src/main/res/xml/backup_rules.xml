@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nur Einstellungen sichern; der (optionale) Verlauf liegt in derselben Datei, ist aber standardmäßig leer. -->
+<full-backup-content>
+    <include domain="file" path="datastore/settings.preferences_pb" />
+</full-backup-content>
