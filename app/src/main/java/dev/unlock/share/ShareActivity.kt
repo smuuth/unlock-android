@@ -55,7 +55,7 @@ class ShareActivity : Activity() {
                 Toast.makeText(activity.applicationContext, R.string.toast_no_link, Toast.LENGTH_SHORT).show()
                 return false
             }
-            if (!LinkOpener.open(activity, result.targetUrl, settings.useCustomTabs)) {
+            if (!LinkOpener.open(activity, result.targetUrl, result.cleanedUrl, settings.domain, settings.openMode)) {
                 Toast.makeText(activity.applicationContext, R.string.toast_no_browser, Toast.LENGTH_SHORT).show()
                 return false
             }

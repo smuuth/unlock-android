@@ -83,6 +83,7 @@ import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveService
 import dev.unlock.archive.ArchiveTarget
 import dev.unlock.settings.HistoryEntry
+import dev.unlock.settings.OpenMode
 import dev.unlock.settings.Settings
 import dev.unlock.settings.SettingsViewModel
 import dev.unlock.share.LinkProcessor
@@ -405,27 +406,58 @@ private fun targetDescription(target: ArchiveTarget) = when (target) {
 private fun BehaviorSection(settings: Settings, viewModel: SettingsViewModel) {
     data class Toggle(val title: Int, val desc: Int, val checked: Boolean, val enabled: Boolean, val onChange: (Boolean) -> Unit)
 
+    val openModes = OpenMode.entries
     val toggles = listOf(
         Toggle(R.string.setting_clean, R.string.setting_clean_desc, settings.cleanUrls, true, viewModel::setCleanUrls),
         Toggle(R.string.setting_amp, R.string.setting_amp_desc, settings.normalizeAmp, settings.cleanUrls, viewModel::setNormalizeAmp),
-        Toggle(R.string.setting_custom_tabs, R.string.setting_custom_tabs_desc, settings.useCustomTabs, true, viewModel::setUseCustomTabs),
         Toggle(R.string.setting_history, R.string.setting_history_desc, settings.historyEnabled, true, viewModel::setHistoryEnabled),
     )
-    Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-        toggles.forEachIndexed { index, t ->
-            SegmentedListItem(
-                checked = t.checked,
-                onCheckedChange = t.onChange,
-                enabled = t.enabled,
-                shapes = ListItemDefaults.segmentedShapes(index, toggles.size),
-                colors = calmSegmentedColors(),
-                supportingContent = { Text(stringResource(t.desc)) },
-                trailingContent = { Switch(checked = t.checked, onCheckedChange = null, enabled = t.enabled) },
-            ) {
-                Text(stringResource(t.title))
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = CardShape) {
+            Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                Text(stringResource(R.string.setting_open_mode), style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.size(8.dp))
+                ConnectedToggleRow(
+                    labels = openModes.map { stringResource(openModeLabel(it)) },
+                    selectedIndex = openModes.indexOf(settings.openMode),
+                    onSelect = { viewModel.setOpenMode(openModes[it]) },
+                )
+                Spacer(Modifier.size(12.dp))
+                Text(
+                    stringResource(openModeDescription(settings.openMode)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+            toggles.forEachIndexed { index, t ->
+                SegmentedListItem(
+                    checked = t.checked,
+                    onCheckedChange = t.onChange,
+                    enabled = t.enabled,
+                    shapes = ListItemDefaults.segmentedShapes(index, toggles.size),
+                    colors = calmSegmentedColors(),
+                    supportingContent = { Text(stringResource(t.desc)) },
+                    trailingContent = { Switch(checked = t.checked, onCheckedChange = null, enabled = t.enabled) },
+                ) {
+                    Text(stringResource(t.title))
+                }
             }
         }
     }
+}
+
+private fun openModeLabel(mode: OpenMode) = when (mode) {
+    OpenMode.READER -> R.string.open_mode_reader
+    OpenMode.CUSTOM_TAB -> R.string.open_mode_custom_tab
+    OpenMode.BROWSER -> R.string.open_mode_browser
+}
+
+private fun openModeDescription(mode: OpenMode) = when (mode) {
+    OpenMode.READER -> R.string.open_mode_reader_desc
+    OpenMode.CUSTOM_TAB -> R.string.open_mode_custom_tab_desc
+    OpenMode.BROWSER -> R.string.open_mode_browser_desc
 }
 
 /** Einheitlicher Hintergrund – der Zustand wird vom Switch angezeigt, nicht von der ganzen Zeile. */

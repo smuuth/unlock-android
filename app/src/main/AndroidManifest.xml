@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Bewusst KEINE INTERNET-Permission: geöffnet wird ausschließlich im Browser / Custom Tab. -->
+    <!-- Internet-Berechtigung ausschließlich zum Laden archivierter Artikel im integrierten Lesemodus. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <queries>
         <!-- Custom-Tabs-Anbieter und Browser finden (Package Visibility, Android 11+). -->
@@ -71,5 +72,11 @@
             android:noHistory="true"
             android:taskAffinity="dev.unlock.share"
             android:theme="@style/Theme.Unlock.Invisible" />
+
+        <!-- Integrierte Leseansicht für archivierte Artikel. -->
+        <activity
+            android:name=".reader.ReaderActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
     </application>
 </manifest>

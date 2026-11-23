@@ -5,10 +5,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveTarget
+import dev.unlock.reader.ReaderFont
+import dev.unlock.reader.ReaderTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -50,7 +53,12 @@ class SettingsRepository(context: Context) {
     suspend fun setDomain(domain: ArchiveDomain) = store.edit { it[Keys.DOMAIN] = domain.host }
     suspend fun setCleanUrls(value: Boolean) = store.edit { it[Keys.CLEAN] = value }
     suspend fun setNormalizeAmp(value: Boolean) = store.edit { it[Keys.AMP] = value }
-    suspend fun setUseCustomTabs(value: Boolean) = store.edit { it[Keys.CUSTOM_TABS] = value }
+    suspend fun setOpenMode(mode: OpenMode) = store.edit { it[Keys.OPEN_MODE] = mode.id }
+    suspend fun setReaderTheme(theme: ReaderTheme) = store.edit { it[Keys.READER_THEME] = theme.id }
+    suspend fun setReaderFont(font: ReaderFont) = store.edit { it[Keys.READER_FONT] = font.id }
+    suspend fun setReaderFontScale(scale: Float) = store.edit {
+        it[Keys.READER_FONT_SCALE] = scale.coerceIn(0.85f, 1.45f)
+    }
 
     suspend fun setHistoryEnabled(value: Boolean) = store.edit {
         it[Keys.HISTORY_ENABLED] = value
@@ -66,14 +74,23 @@ class SettingsRepository(context: Context) {
 
     suspend fun clearHistory() = store.edit { it.remove(Keys.HISTORY) }
 
-    private fun Preferences.toSettings() = Settings(
-        target = ArchiveTarget.fromId(this[Keys.TARGET]) ?: ArchiveTarget.DEFAULT,
-        domain = ArchiveDomain.fromHost(this[Keys.DOMAIN]) ?: ArchiveDomain.DEFAULT,
-        cleanUrls = this[Keys.CLEAN] ?: true,
-        normalizeAmp = this[Keys.AMP] ?: false,
-        useCustomTabs = this[Keys.CUSTOM_TABS] ?: true,
-        historyEnabled = this[Keys.HISTORY_ENABLED] ?: false,
-    )
+    private fun Preferences.toSettings(): Settings {
+        val openMode = OpenMode.fromId(this[Keys.OPEN_MODE]) ?: when (this[Keys.CUSTOM_TABS]) {
+            false -> OpenMode.BROWSER
+            else -> OpenMode.DEFAULT
+        }
+        return Settings(
+            target = ArchiveTarget.fromId(this[Keys.TARGET]) ?: ArchiveTarget.DEFAULT,
+            domain = ArchiveDomain.fromHost(this[Keys.DOMAIN]) ?: ArchiveDomain.DEFAULT,
+            cleanUrls = this[Keys.CLEAN] ?: true,
+            normalizeAmp = this[Keys.AMP] ?: false,
+            openMode = openMode,
+            historyEnabled = this[Keys.HISTORY_ENABLED] ?: false,
+            readerTheme = ReaderTheme.fromId(this[Keys.READER_THEME]),
+            readerFont = ReaderFont.fromId(this[Keys.READER_FONT]),
+            readerFontScale = (this[Keys.READER_FONT_SCALE] ?: 1.05f).coerceIn(0.85f, 1.45f),
+        )
+    }
 
     private object Keys {
         val TARGET = stringPreferencesKey("target")
@@ -81,6 +98,10 @@ class SettingsRepository(context: Context) {
         val CLEAN = booleanPreferencesKey("clean_urls")
         val AMP = booleanPreferencesKey("normalize_amp")
         val CUSTOM_TABS = booleanPreferencesKey("custom_tabs")
+        val OPEN_MODE = stringPreferencesKey("open_mode")
+        val READER_THEME = stringPreferencesKey("reader_theme")
+        val READER_FONT = stringPreferencesKey("reader_font")
+        val READER_FONT_SCALE = floatPreferencesKey("reader_font_scale")
         val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
         val HISTORY = stringPreferencesKey("history")
     }
