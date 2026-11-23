@@ -23,6 +23,17 @@ class ArticleParserTest {
         assertEquals(ExtractionResult.NeedsInteraction(InteractionReason.NO_RESULTS), res)
     }
 
+    @Test fun detectsSubmitFormAndSubmitting() {
+        assertEquals(
+            ExtractionResult.NeedsInteraction(InteractionReason.SUBMIT_FORM),
+            ArticleParser.parse("""{"status":"submit_form"}""", "https://www.echo-online.de/a", "https://archive.ph/?url=..."),
+        )
+        assertEquals(
+            ExtractionResult.NeedsInteraction(InteractionReason.SUBMITTING),
+            ArticleParser.parse("""{"status":"submitting"}""", "https://www.echo-online.de/a", "https://archive.ph/submit/?url=..."),
+        )
+    }
+
     @Test fun parsesRichArticleBlocks() {
         val json = """
             {

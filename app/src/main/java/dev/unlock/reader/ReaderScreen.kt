@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,6 +19,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -106,6 +109,7 @@ import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveTarget
 import dev.unlock.archive.TargetUrlBuilder
 import dev.unlock.settings.Settings
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -145,6 +149,8 @@ fun ReaderScreen(
     var showOverflowMenu by remember { mutableStateOf(false) }
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var userAgent by remember { mutableStateOf<String?>(null) }
+    var extractionJob by remember { mutableStateOf<Job?>(null) }
+    var mainFrameErrorUrl by remember { mutableStateOf<String?>(null) }
 
     val listState = rememberLazyListState()
     val readingProgress by remember {
@@ -162,6 +168,8 @@ fun ReaderScreen(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     fun loadUrlInWebView(url: String) {
+        extractionJob?.cancel()
+        mainFrameErrorUrl = null
         currentArchiveUrl = url
         forceWebView = false
         state = ReaderState.Loading
@@ -192,9 +200,12 @@ fun ReaderScreen(
     }
 
     fun runExtraction(view: WebView, loadedUrl: String) {
-        scope.launch {
+        extractionJob?.cancel()
+        extractionJob = scope.launch {
             delay(450)
+            if (loadedUrl != currentArchiveUrl || mainFrameErrorUrl != null) return@launch
             view.evaluateJavascript(ArticleExtractorScript.JS) { raw ->
+                if (loadedUrl != currentArchiveUrl || mainFrameErrorUrl != null) return@evaluateJavascript
                 when (val result = ArticleParser.parse(raw, originalUrl, loadedUrl)) {
                     is ExtractionResult.ArticleFound -> {
                         state = ReaderState.ArticleReady(result.article)
@@ -209,6 +220,7 @@ fun ReaderScreen(
                         )
                     }
                     is ExtractionResult.NeedsInteraction -> {
+                        forceWebView = false
                         state = ReaderState.Interactive(result.reason)
                         onTrackEvent(
                             "Unlock.Reader.interaction",
@@ -226,6 +238,7 @@ fun ReaderScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            extractionJob?.cancel()
             webViewRef?.stopLoading()
             webViewRef?.destroy()
             webViewRef = null
@@ -375,8 +388,10 @@ fun ReaderScreen(
                     InteractionBanner(
                         reason = interactionReason,
                         palette = palette,
+                        onArchiveNow = ::submitFreshSnapshot,
                         onTryWayback = ::switchToWayback,
                         onTryOtherDomain = ::switchToNextDomain,
+                        onRetry = { loadUrlInWebView(currentArchiveUrl) },
                     )
                 }
                 AndroidView(
@@ -386,14 +401,35 @@ fun ReaderScreen(
                             context = ctx,
                             onProgress = { p -> webProgress = p / 100f },
                             onPageStarted = { url ->
+                                extractionJob?.cancel()
+                                mainFrameErrorUrl = null
+                                if (state is ReaderState.ArticleReady &&
+                                    url.substringBefore('#') != currentArchiveUrl.substringBefore('#')
+                                ) {
+                                    forceWebView = false
+                                }
                                 currentArchiveUrl = url
                                 if (state !is ReaderState.Interactive) {
                                     state = ReaderState.Loading
                                 }
                             },
                             onPageFinished = { view, url ->
+                                if (mainFrameErrorUrl != null) return@createConfiguredWebView
                                 currentArchiveUrl = url
                                 runExtraction(view, url)
+                            },
+                            onHistoryUpdated = { view, url ->
+                                if (url != currentArchiveUrl && mainFrameErrorUrl == null) {
+                                    currentArchiveUrl = url
+                                    runExtraction(view, url)
+                                }
+                            },
+                            onMainFrameError = { failedUrl ->
+                                mainFrameErrorUrl = failedUrl.ifBlank { currentArchiveUrl }
+                                extractionJob?.cancel()
+                                forceWebView = false
+                                state = ReaderState.Interactive(InteractionReason.LOAD_ERROR)
+                                onTrackEvent("Unlock.Reader.interaction", mapOf("reason" to "load_error"))
                             },
                         ).also { wv ->
                             webViewRef = wv
@@ -485,6 +521,8 @@ private fun createConfiguredWebView(
     onProgress: (Int) -> Unit,
     onPageStarted: (String) -> Unit,
     onPageFinished: (WebView, String) -> Unit,
+    onHistoryUpdated: (WebView, String) -> Unit,
+    onMainFrameError: (String) -> Unit,
 ): WebView = WebView(context).apply {
     layoutParams = ViewGroup.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -518,20 +556,39 @@ private fun createConfiguredWebView(
         override fun onPageFinished(view: WebView?, url: String?) {
             if (view != null && !url.isNullOrBlank()) onPageFinished(view, url)
         }
+
+        override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+            if (view != null && !url.isNullOrBlank() && !isReload) onHistoryUpdated(view, url)
+        }
+
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            error: WebResourceError?,
+        ) {
+            if (request?.isForMainFrame == true) {
+                onMainFrameError(request.url?.toString().orEmpty())
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InteractionBanner(
     reason: InteractionReason,
     palette: ReaderPalette,
+    onArchiveNow: () -> Unit,
     onTryWayback: () -> Unit,
     onTryOtherDomain: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     val message = when (reason) {
         InteractionReason.CAPTCHA -> stringResource(R.string.reader_banner_captcha)
         InteractionReason.NO_RESULTS -> stringResource(R.string.reader_banner_no_results)
+        InteractionReason.SUBMIT_FORM -> stringResource(R.string.reader_banner_submit_form)
         InteractionReason.SUBMITTING -> stringResource(R.string.reader_banner_submitting)
+        InteractionReason.LOAD_ERROR -> stringResource(R.string.reader_banner_load_error)
     }
     Surface(
         color = palette.surface,
@@ -543,14 +600,52 @@ private fun InteractionBanner(
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.text,
             )
-            if (reason == InteractionReason.NO_RESULTS || reason == InteractionReason.CAPTCHA) {
+            if (reason != InteractionReason.SUBMITTING) {
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilledTonalButton(onClick = onTryWayback) {
-                        Text(stringResource(R.string.reader_menu_wayback))
-                    }
-                    OutlinedButton(onClick = onTryOtherDomain) {
-                        Text(stringResource(R.string.reader_banner_other_domain))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    when (reason) {
+                        InteractionReason.NO_RESULTS -> {
+                            FilledTonalButton(onClick = onArchiveNow) {
+                                Text(stringResource(R.string.reader_banner_archive_now))
+                            }
+                            OutlinedButton(onClick = onTryWayback) {
+                                Text(stringResource(R.string.reader_menu_wayback))
+                            }
+                            OutlinedButton(onClick = onTryOtherDomain) {
+                                Text(stringResource(R.string.reader_banner_other_domain))
+                            }
+                        }
+                        InteractionReason.SUBMIT_FORM -> {
+                            FilledTonalButton(onClick = onArchiveNow) {
+                                Text(stringResource(R.string.reader_banner_archive_now))
+                            }
+                            OutlinedButton(onClick = onTryWayback) {
+                                Text(stringResource(R.string.reader_menu_wayback))
+                            }
+                        }
+                        InteractionReason.CAPTCHA -> {
+                            FilledTonalButton(onClick = onTryWayback) {
+                                Text(stringResource(R.string.reader_menu_wayback))
+                            }
+                            OutlinedButton(onClick = onTryOtherDomain) {
+                                Text(stringResource(R.string.reader_banner_other_domain))
+                            }
+                        }
+                        InteractionReason.LOAD_ERROR -> {
+                            FilledTonalButton(onClick = onTryOtherDomain) {
+                                Text(stringResource(R.string.reader_banner_other_domain))
+                            }
+                            OutlinedButton(onClick = onTryWayback) {
+                                Text(stringResource(R.string.reader_menu_wayback))
+                            }
+                            OutlinedButton(onClick = onRetry) {
+                                Text(stringResource(R.string.reader_banner_retry))
+                            }
+                        }
+                        InteractionReason.SUBMITTING -> Unit
                     }
                 }
             }
@@ -559,6 +654,7 @@ private fun InteractionBanner(
     HorizontalDivider(color = palette.divider)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ArticleReaderContent(
     article: Article,
@@ -791,7 +887,10 @@ private fun ArticleReaderContent(
                                     color = palette.secondaryText,
                                 )
                                 Spacer(Modifier.height(12.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
                                     FilledTonalButton(onClick = onShowOriginal) {
                                         Text(stringResource(R.string.reader_show_original))
                                     }

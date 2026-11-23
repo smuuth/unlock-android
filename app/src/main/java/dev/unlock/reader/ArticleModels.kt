@@ -31,7 +31,9 @@ data class InlineSpan(
 enum class InteractionReason {
     CAPTCHA,
     NO_RESULTS,
+    SUBMIT_FORM,
     SUBMITTING,
+    LOAD_ERROR,
 }
 
 sealed interface ExtractionResult {
