@@ -66,6 +66,26 @@ class SettingsRepository(context: Context) {
         if (!value) it.remove(Keys.HISTORY)
     }
 
+    suspend fun setAnalyticsEnabled(value: Boolean) = store.edit {
+        it[Keys.ANALYTICS_ENABLED] = value
+        if (!value) it.remove(Keys.ANALYTICS_CLIENT_ID)
+    }
+
+    suspend fun getOrCreateAnalyticsClientId(): String {
+        var id: String? = null
+        store.edit { prefs ->
+            val existing = prefs[Keys.ANALYTICS_CLIENT_ID]
+            if (!existing.isNullOrBlank()) {
+                id = existing
+            } else {
+                val created = java.util.UUID.randomUUID().toString()
+                prefs[Keys.ANALYTICS_CLIENT_ID] = created
+                id = created
+            }
+        }
+        return id ?: java.util.UUID.randomUUID().toString()
+    }
+
     suspend fun addToHistory(url: String, now: Long = System.currentTimeMillis()) = store.edit { prefs ->
         if (prefs[Keys.HISTORY_ENABLED] != true) return@edit
         val entries = listOf(HistoryEntry(url, now)) + decodeHistory(prefs[Keys.HISTORY]).filter { it.url != url }
@@ -86,6 +106,7 @@ class SettingsRepository(context: Context) {
             normalizeAmp = this[Keys.AMP] ?: false,
             openMode = openMode,
             historyEnabled = this[Keys.HISTORY_ENABLED] ?: false,
+            analyticsEnabled = this[Keys.ANALYTICS_ENABLED] ?: true,
             readerTheme = ReaderTheme.fromId(this[Keys.READER_THEME]),
             readerFont = ReaderFont.fromId(this[Keys.READER_FONT]),
             readerFontScale = (this[Keys.READER_FONT_SCALE] ?: 1.05f).coerceIn(0.85f, 1.45f),
@@ -104,6 +125,8 @@ class SettingsRepository(context: Context) {
         val READER_FONT_SCALE = floatPreferencesKey("reader_font_scale")
         val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
         val HISTORY = stringPreferencesKey("history")
+        val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
+        val ANALYTICS_CLIENT_ID = stringPreferencesKey("analytics_client_id")
     }
 
     companion object {

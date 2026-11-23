@@ -6,7 +6,7 @@ Teilst du aus einer beliebigen App (Chrome, Reddit, Feedly, X …) einen Link mi
 
 - **Integrierter Editorial-Lesemodus:** Automatische Artikel-Extraktion auch für feste Desktop-Snapshots von `archive.today`, mit 4 Farbschemata (*System*, *Hell*, *Sepia*, *Dunkel*), *Serif*/*Sans-Serif*, stufenloser Schriftgröße, Lesefortschritt und 1-Tipp-Wechsel zur Original-Ansicht
 - **Nahtloses Captcha-Handling:** Falls ein Archivdienst eine Sicherheitsabfrage oder „No results“ zeigt, öffnet sich automatisch die interaktive WebView; danach springt Unlock selbstständig in die Leseansicht
-- **Datenschutz:** Kein Analytics, kein Tracking, keine Werbung; optionaler Verlauf bleibt ausschließlich lokal auf dem Gerät. `INTERNET` wird ausschließlich zum Laden der archivierten Seiten im Lesemodus genutzt
+- **Datenschutz:** Keine Werbung, kein personenbezogenes Tracking, niemals Übermittlung gelesener Links oder Artikelinhalte; optionaler Verlauf bleibt lokal. Optionale, rein anonyme Nutzungsstatistiken (TelemetryDeck, ohne SDK) lassen sich jederzeit in den Einstellungen abschalten und sind nur aktiv, wenn eine `telemetryAppId` konfiguriert ist
 - **Ultraleicht:** Release-APK ≈ **1,7 MB** (R8 + Resource-Shrinking, keine Drittanbieter-Netzwerk- oder Bild-Libraries)
 - **Modernes Android:** Material 3 Expressive, Dynamic Color, Dark Mode, Edge-to-Edge, Predictive Back, Deutsch & Englisch (inkl. App-Sprache ab Android 13)
 
@@ -41,6 +41,8 @@ keyPassword=...
 ```
 
 Alternativ können in CI/CD die Umgebungsvariablen `UNLOCK_KEYSTORE_PATH`, `UNLOCK_KEYSTORE_PASSWORD`, `UNLOCK_KEY_ALIAS` und `UNLOCK_KEY_PASSWORD` gesetzt werden. Ohne Konfiguration fällt der Release-Build auf den lokalen Debug-Key zurück.
+
+Für optionale anonyme Nutzungsstatistiken über [TelemetryDeck](https://telemetrydeck.com/) einfach `telemetryAppId=<deine-app-id>` in `keystore.properties` (oder `UNLOCK_TELEMETRY_APP_ID` als Umgebungsvariable/GitHub-Secret) eintragen. Ohne gesetzte ID sendet die App keinerlei Telemetrie.
 
 | Komponente | Version |
 |---|---|

@@ -25,6 +25,8 @@ data class Settings(
     val openMode: OpenMode = OpenMode.DEFAULT,
     /** Aus Datenschutzgründen standardmäßig aus. */
     val historyEnabled: Boolean = false,
+    /** Rein anonyme Nutzungsstatistik ohne URLs/Inhalte (Opt-out jederzeit möglich). */
+    val analyticsEnabled: Boolean = true,
     val readerTheme: ReaderTheme = ReaderTheme.DEFAULT,
     val readerFont: ReaderFont = ReaderFont.DEFAULT,
     val readerFontScale: Float = 1.05f,

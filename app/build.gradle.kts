@@ -10,9 +10,17 @@ val keystoreProps = Properties().apply {
     if (file.isFile) file.inputStream().use(::load)
 }
 
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.isFile) file.inputStream().use(::load)
+}
+
 fun signingValue(propKey: String, envKey: String): String? =
     System.getenv(envKey)?.takeIf { it.isNotBlank() }
         ?: keystoreProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
+        ?: localProps.getProperty(propKey)?.takeIf { it.isNotBlank() }
+
+val telemetryAppId = signingValue("telemetryAppId", "UNLOCK_TELEMETRY_APP_ID").orEmpty()
 
 val releaseStoreFile = signingValue("storeFile", "UNLOCK_KEYSTORE_PATH")?.let { file(it) }
 val releaseStorePassword = signingValue("storePassword", "UNLOCK_KEYSTORE_PASSWORD")
@@ -35,6 +43,7 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0.0"
+        buildConfigField("String", "TELEMETRY_APP_ID", "\"${telemetryAppId.replace("\"", "")}\"")
     }
 
     androidResources {

@@ -28,7 +28,8 @@ class ShareActivity : Activity() {
     private fun handle(intent: Intent?) {
         val texts = extractTexts(intent ?: return)
         val override = ShortcutPublisher.targetForShortcut(intent.getStringExtra(EXTRA_SHORTCUT_ID))
-        openFromTexts(this, texts, override)
+        val source = if (intent.action == Intent.ACTION_PROCESS_TEXT) "process_text" else "share"
+        openFromTexts(this, texts, override, source)
         intent.getStringExtra(EXTRA_SHORTCUT_ID)?.let { ShortcutManagerCompat.reportShortcutUsed(this, it) }
     }
 
@@ -47,6 +48,7 @@ class ShareActivity : Activity() {
             activity: Activity,
             texts: List<String?>,
             targetOverride: dev.unlock.archive.ArchiveTarget? = null,
+            source: String = "share",
         ): Boolean {
             val app = activity.unlockApp
             val settings = app.settingsRepository.current()
@@ -59,6 +61,16 @@ class ShareActivity : Activity() {
                 Toast.makeText(activity.applicationContext, R.string.toast_no_browser, Toast.LENGTH_SHORT).show()
                 return false
             }
+            val effectiveTarget = targetOverride ?: settings.target
+            app.telemetry.track(
+                "Unlock.Article.opened",
+                mapOf(
+                    "openMode" to settings.openMode.id,
+                    "service" to effectiveTarget.service.name.lowercase(),
+                    "target" to effectiveTarget.id,
+                    "source" to source,
+                ),
+            )
             if (settings.historyEnabled) {
                 app.appScope.launch { app.settingsRepository.addToHistory(result.cleanedUrl) }
             }

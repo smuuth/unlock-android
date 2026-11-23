@@ -28,6 +28,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setNormalizeAmp(value: Boolean) = update { repo.setNormalizeAmp(value) }
     fun setOpenMode(value: OpenMode) = update { repo.setOpenMode(value) }
     fun setHistoryEnabled(value: Boolean) = update { repo.setHistoryEnabled(value) }
+    fun setAnalyticsEnabled(value: Boolean) = update { repo.setAnalyticsEnabled(value) }
     fun clearHistory() = update { repo.clearHistory() }
 
     private fun update(block: suspend () -> Unit) {

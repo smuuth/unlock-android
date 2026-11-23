@@ -46,9 +46,16 @@ class ReaderActivity : ComponentActivity() {
                     originalUrl = originalUrl,
                     initialDomain = domain,
                     settings = settings,
-                    onUpdateTheme = { theme -> unlockApp.appScope.launch { repo.setReaderTheme(theme) } },
-                    onUpdateFont = { font -> unlockApp.appScope.launch { repo.setReaderFont(font) } },
+                    onUpdateTheme = { theme ->
+                        unlockApp.appScope.launch { repo.setReaderTheme(theme) }
+                        unlockApp.telemetry.track("Unlock.Reader.appearanceChanged", mapOf("theme" to theme.id))
+                    },
+                    onUpdateFont = { font ->
+                        unlockApp.appScope.launch { repo.setReaderFont(font) }
+                        unlockApp.telemetry.track("Unlock.Reader.appearanceChanged", mapOf("font" to font.id))
+                    },
                     onUpdateFontScale = { scale -> unlockApp.appScope.launch { repo.setReaderFontScale(scale) } },
+                    onTrackEvent = { type, params -> unlockApp.telemetry.track(type, params) },
                     onOpenInBrowser = { url -> LinkOpener.openExternal(this, url, useCustomTabs = false) },
                     onShareUrl = { url ->
                         startActivity(

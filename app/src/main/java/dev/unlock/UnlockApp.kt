@@ -1,6 +1,7 @@
 package dev.unlock
 
 import android.app.Application
+import dev.unlock.analytics.TelemetryClient
 import dev.unlock.settings.SettingsRepository
 import dev.unlock.shortcuts.ShortcutPublisher
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,8 @@ class UnlockApp : Application() {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val settingsRepository by lazy { SettingsRepository(this) }
+
+    val telemetry by lazy { TelemetryClient(settingsRepository, appScope) }
 
     override fun onCreate() {
         super.onCreate()

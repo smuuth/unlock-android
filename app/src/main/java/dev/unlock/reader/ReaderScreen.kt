@@ -126,6 +126,7 @@ fun ReaderScreen(
     onUpdateTheme: (ReaderTheme) -> Unit,
     onUpdateFont: (ReaderFont) -> Unit,
     onUpdateFontScale: (Float) -> Unit,
+    onTrackEvent: (String, Map<String, String>) -> Unit = { _, _ -> },
     onOpenInBrowser: (String) -> Unit,
     onShareUrl: (String) -> Unit,
     onBack: () -> Unit,
@@ -174,16 +175,19 @@ fun ReaderScreen(
     }
 
     fun switchToWayback() {
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "wayback"))
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.WAYBACK))
     }
 
     fun switchToNextDomain() {
         val next = nextDomain()
         currentDomain = next
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "other_domain"))
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.ARCHIVE_TODAY_NEWEST, next))
     }
 
     fun submitFreshSnapshot() {
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "rearchive"))
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.ARCHIVE_TODAY_SUBMIT, currentDomain))
     }
 
@@ -194,12 +198,26 @@ fun ReaderScreen(
                 when (val result = ArticleParser.parse(raw, originalUrl, loadedUrl)) {
                     is ExtractionResult.ArticleFound -> {
                         state = ReaderState.ArticleReady(result.article)
+                        val service = if ("web.archive.org" in loadedUrl) "wayback" else "archive.today"
+                        onTrackEvent(
+                            "Unlock.Reader.extracted",
+                            mapOf(
+                                "service" to service,
+                                "theme" to settings.readerTheme.id,
+                                "font" to settings.readerFont.id,
+                            ),
+                        )
                     }
                     is ExtractionResult.NeedsInteraction -> {
                         state = ReaderState.Interactive(result.reason)
+                        onTrackEvent(
+                            "Unlock.Reader.interaction",
+                            mapOf("reason" to result.reason.name.lowercase()),
+                        )
                     }
                     ExtractionResult.NotAnArticle -> {
                         state = ReaderState.Interactive(null)
+                        onTrackEvent("Unlock.Reader.interaction", mapOf("reason" to "not_article"))
                     }
                 }
             }

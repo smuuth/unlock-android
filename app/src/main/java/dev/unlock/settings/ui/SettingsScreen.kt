@@ -221,7 +221,7 @@ private fun TryItCard(settings: Settings) {
     val scope = rememberCoroutineScope()
     var text by rememberSaveable { mutableStateOf("") }
     val result = remember(text, settings) { LinkProcessor.process(listOf(text), settings) }
-    val open = { if (result != null) ShareActivity.openFromTexts(context as Activity, listOf(text)) }
+    val open = { if (result != null) ShareActivity.openFromTexts(context as Activity, listOf(text), source = "test") }
 
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = CardShape) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
@@ -411,6 +411,7 @@ private fun BehaviorSection(settings: Settings, viewModel: SettingsViewModel) {
         Toggle(R.string.setting_clean, R.string.setting_clean_desc, settings.cleanUrls, true, viewModel::setCleanUrls),
         Toggle(R.string.setting_amp, R.string.setting_amp_desc, settings.normalizeAmp, settings.cleanUrls, viewModel::setNormalizeAmp),
         Toggle(R.string.setting_history, R.string.setting_history_desc, settings.historyEnabled, true, viewModel::setHistoryEnabled),
+        Toggle(R.string.setting_analytics, R.string.setting_analytics_desc, settings.analyticsEnabled, true, viewModel::setAnalyticsEnabled),
     )
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = CardShape) {
@@ -500,7 +501,7 @@ private fun HistorySection(history: List<HistoryEntry>, onClear: () -> Unit) {
             Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                 history.forEachIndexed { index, entry ->
                     SegmentedListItem(
-                        onClick = { ShareActivity.openFromTexts(context as Activity, listOf(entry.url)) },
+                        onClick = { ShareActivity.openFromTexts(context as Activity, listOf(entry.url), source = "history") },
                         shapes = ListItemDefaults.segmentedShapes(index, history.size),
                         colors = calmSegmentedColors(),
                         leadingContent = { Icon(painterResource(R.drawable.ic_history), null) },

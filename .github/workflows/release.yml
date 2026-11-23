@@ -32,6 +32,7 @@ jobs:
           UNLOCK_KEYSTORE_PASSWORD: ${{ secrets.UNLOCK_KEYSTORE_PASSWORD }}
           UNLOCK_KEY_ALIAS: ${{ secrets.UNLOCK_KEY_ALIAS }}
           UNLOCK_KEY_PASSWORD: ${{ secrets.UNLOCK_KEY_PASSWORD }}
+          UNLOCK_TELEMETRY_APP_ID: ${{ secrets.UNLOCK_TELEMETRY_APP_ID }}
         run: ./gradlew testDebugUnitTest assembleRelease
 
       - name: Rename release APK
