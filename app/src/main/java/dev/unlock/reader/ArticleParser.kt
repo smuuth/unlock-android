@@ -18,6 +18,7 @@ object ArticleParser {
         return when (root.optString("status")) {
             "captcha" -> ExtractionResult.NeedsInteraction(InteractionReason.CAPTCHA)
             "no_results" -> ExtractionResult.NeedsInteraction(InteractionReason.NO_RESULTS)
+            "submit_form" -> ExtractionResult.NeedsInteraction(InteractionReason.SUBMIT_FORM)
             "submitting" -> ExtractionResult.NeedsInteraction(InteractionReason.SUBMITTING)
             "article" -> {
                 val obj = root.optJSONObject("article") ?: return ExtractionResult.NotAnArticle

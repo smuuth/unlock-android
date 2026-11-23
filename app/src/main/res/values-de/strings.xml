@@ -72,8 +72,12 @@
     <string name="reader_menu_share_archive">Archiv-Link teilen</string>
     <string name="reader_menu_open_browser">Im Browser öffnen</string>
     <string name="reader_banner_captcha">Sicherheitsabfrage kurz lösen – danach öffnet sich automatisch der Lesemodus.</string>
-    <string name="reader_banner_no_results">Noch kein Snapshot vorhanden. Tippe unten auf „archive this url“ oder wechsle zur Wayback Machine.</string>
+    <string name="reader_banner_no_results">Noch kein Snapshot vorhanden. Du kannst den Artikel jetzt archivieren oder die Wayback Machine versuchen.</string>
+    <string name="reader_banner_archive_now">Jetzt archivieren</string>
+    <string name="reader_banner_submit_form">Tippe auf „Jetzt archivieren“ (oder unten auf „speichern“), um einen neuen Snapshot anzulegen.</string>
     <string name="reader_banner_submitting">Neuer Snapshot wird erstellt – der Lesemodus öffnet sich automatisch, sobald er fertig ist.</string>
+    <string name="reader_banner_load_error">Seite konnte nicht geladen werden. Probiere eine andere Domain oder die Wayback Machine.</string>
+    <string name="reader_banner_retry">Erneut laden</string>
     <string name="reader_banner_other_domain">Andere Domain</string>
     <string name="reader_theme_title">Farbschema</string>
     <string name="reader_theme_system">System</string>

@@ -73,8 +73,12 @@
     <string name="reader_menu_share_archive">Share archive link</string>
     <string name="reader_menu_open_browser">Open in browser</string>
     <string name="reader_banner_captcha">Complete the security check below – Reader view will open automatically right after.</string>
-    <string name="reader_banner_no_results">No snapshot found yet. Tap “archive this url” below or switch to the Wayback Machine.</string>
+    <string name="reader_banner_no_results">No snapshot found yet. Archive this article now or try the Wayback Machine.</string>
+    <string name="reader_banner_archive_now">Archive now</string>
+    <string name="reader_banner_submit_form">Tap “Archive now” (or “save” below) to create a fresh snapshot.</string>
     <string name="reader_banner_submitting">Creating a fresh snapshot – Reader view will open automatically once ready.</string>
+    <string name="reader_banner_load_error">Could not load the page. Try another domain or the Wayback Machine.</string>
+    <string name="reader_banner_retry">Retry</string>
     <string name="reader_banner_other_domain">Other domain</string>
     <string name="reader_theme_title">Theme</string>
     <string name="reader_theme_system">System</string>

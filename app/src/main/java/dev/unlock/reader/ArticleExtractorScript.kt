@@ -17,10 +17,14 @@ object ArticleExtractorScript {
   try {
     var bodyText = (document.body && document.body.innerText || '').trim();
     var titleText = (document.title || '').trim();
+    var host = (location.hostname || '').toLowerCase();
+    var isArchiveToday = /(^|\.)archive\.(ph|is|today|md|li|vn|fo|ec)$/.test(host);
+    var isWayback = host === 'web.archive.org';
+    var hasArchiveContent = !!document.getElementById('CONTENT');
 
     // 1. Captcha / Sicherheitsabfrage erkennen
     var hasCaptchaEl = !!document.querySelector(
-      '#recaptcha, .g-recaptcha, iframe[src*="recaptcha"], iframe[src*="hcaptcha"], ' +
+      '#recaptcha, #g-recaptcha, .g-recaptcha, iframe[src*="recaptcha"], iframe[src*="hcaptcha"], ' +
       'iframe[src*="challenges.cloudflare"], iframe[src*="turnstile"], #cf-challenge-running'
     );
     var looksLikeCaptcha = hasCaptchaEl ||
@@ -31,17 +35,27 @@ object ArticleExtractorScript {
       return JSON.stringify({ status: 'captcha' });
     }
 
-    // 2. Laufende Archivierung / Submit-Seite erkennen
-    if (/\/submit\//i.test(location.pathname) || /\/wip\//i.test(location.pathname)) {
+    // 2. Laufende Archivierung / Submit-Seite / Startformular erkennen
+    if (/\/submit(\/|$)/i.test(location.pathname) || /\/wip(\/|$)/i.test(location.pathname) ||
+        (isWayback && /\/save(\/|$)/i.test(location.pathname))) {
       return JSON.stringify({ status: 'submitting' });
+    }
+    if (isArchiveToday && !hasArchiveContent && !!document.getElementById('submiturl')) {
+      return JSON.stringify({ status: 'submit_form' });
     }
 
     // 3. „No results“ (archive.today) oder „not archived“ (Wayback Machine)
     var headSlice = bodyText.slice(0, 1200);
     if ((/no results/i.test(headSlice) && /archive this url/i.test(headSlice)) ||
-        /wayback machine has not archived/i.test(headSlice) ||
+        (/keine ergebnisse/i.test(headSlice) && /archivieren/i.test(headSlice)) ||
+        (isArchiveToday && !hasArchiveContent && !!document.querySelector('a[href*="?url="]') &&
+          /\/(newest|oldest|timegate)\//i.test(location.pathname)) ||
+        /wayback machine has( not|n't) archived/i.test(headSlice) ||
         /hrm\.\s*the wayback machine/i.test(headSlice)) {
       return JSON.stringify({ status: 'no_results' });
+    }
+    if (isArchiveToday && !hasArchiveContent) {
+      return JSON.stringify({ status: 'not_article' });
     }
 
     // 4. Hauptbereich eingrenzen: bei archive.today liegt die Seite in #CONTENT
@@ -52,12 +66,20 @@ object ArticleExtractorScript {
       return (s || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    function isHidden(el) {
+    function isSelfHidden(el) {
       if (!el || el.nodeType !== 1) return false;
       if (el.hidden || el.getAttribute('aria-hidden') === 'true') return true;
       var style = window.getComputedStyle ? window.getComputedStyle(el) : null;
       if (style && (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0')) {
         return true;
+      }
+      return false;
+    }
+
+    function isHidden(el) {
+      for (var cur = el; cur && cur !== document.documentElement; cur = cur.parentElement) {
+        if (isSelfHidden(cur)) return true;
+        if (cur === root) break;
       }
       return false;
     }
@@ -85,7 +107,19 @@ object ArticleExtractorScript {
       return false;
     }
 
+    function isInNoise(el) {
+      for (var cur = el; cur && cur !== root && cur !== document.body; cur = cur.parentElement) {
+        if (isNoise(cur)) return true;
+      }
+      return false;
+    }
+
+    function isInsideLink(el) {
+      return !!(el && el.closest && el.closest('a[href]'));
+    }
+
     function linkDensity(el) {
+      if (isInsideLink(el)) return 1;
       var textLen = cleanSpace(el.innerText).length;
       if (textLen === 0) return 1;
       var linkLen = 0;
@@ -123,19 +157,19 @@ object ArticleExtractorScript {
     var rawBlocks = root.querySelectorAll('p, div');
     for (var i = 0; i < rawBlocks.length; i++) {
       var b = rawBlocks[i];
-      if (isHidden(b) || isNoise(b)) continue;
       if (b.tagName === 'DIV' && !isLeafTextBlock(b)) continue;
+      if (isInsideLink(b) || isHidden(b) || isInNoise(b)) continue;
       var t = cleanSpace(b.innerText);
       if (t.length < 40) continue;
       if (linkDensity(b) > 0.55) continue;
       allLeaves.push({ el: b, len: t.length, punct: (t.split(/[,.;:]/).length - 1) });
     }
 
-    // Eltern-Container hochbewerten (klassisches Readability-Scoring, aber auch für archive.today-DIVs)
+    // Eltern-Container hochbewerten (auch tief verschachtelte CMS-Wrapper wie bei Vue/Nuxt)
     var candidateMap = [];
     function addScore(container, pts) {
-      if (!container || container === document.body || container === document.documentElement) return;
-      if (isHidden(container) || isNoise(container)) return;
+      if (!container || container === root || container === document.body || container === document.documentElement) return;
+      if (isHidden(container) || isInNoise(container)) return;
       for (var k = 0; k < candidateMap.length; k++) {
         if (candidateMap[k].el === container) {
           candidateMap[k].score += pts;
@@ -149,12 +183,15 @@ object ArticleExtractorScript {
     for (var i = 0; i < allLeaves.length; i++) {
       var leaf = allLeaves[i];
       var basePts = Math.min(leaf.len, 450) / 35 + leaf.punct * 0.6;
-      var p1 = leaf.el.parentElement;
-      var p2 = p1 ? p1.parentElement : null;
-      var p3 = p2 ? p2.parentElement : null;
-      addScore(p1, basePts);
-      addScore(p2, basePts * 0.75);
-      addScore(p3, basePts * 0.45);
+      var cur = leaf.el.parentElement;
+      var depth = 0;
+      for (var hop = 0; cur && cur !== root && cur !== document.body && hop < 14; hop++, cur = cur.parentElement) {
+        if (isNoise(cur)) break;
+        var weight = 1 / (1 + depth * 0.35);
+        addScore(cur, basePts * weight);
+        depth += (cur.children && cur.children.length > 1) ? 1 : 0.25;
+        if (depth > 6) break;
+      }
     }
 
     var bestNode = null;
@@ -178,12 +215,23 @@ object ArticleExtractorScript {
       bestNode = root.querySelector('article') || root.querySelector('main') || root;
     }
 
-    // Falls der beste Container nur den Body-Text hat, das Titelbild/H1 aber eine Ebene darüber liegt:
-    // eine Ebene nach oben gehen, solange Link-Dichte niedrig bleibt
-    if (bestNode !== root && bestNode.parentElement && bestNode.parentElement !== root) {
+    // Falls der beste Container nur den Body-Text hat, das Titelbild/H1/Vorspann aber darüber liegt:
+    // bis zu zwei Ebenen nach oben gehen, solange Link-Dichte niedrig bleibt
+    for (var up = 0; up < 2 && bestNode !== root && bestNode.parentElement && bestNode.parentElement !== root; up++) {
       var parent = bestNode.parentElement;
-      if (!bestNode.querySelector('h1') && parent.querySelector('h1') && linkDensity(parent) < 0.35) {
+      if (isHidden(parent) || isNoise(parent)) break;
+      var parentLd = linkDensity(parent);
+      var bestLen = cleanSpace(bestNode.innerText).length;
+      var parentLen = cleanSpace(parent.innerText).length;
+      var addsH1 = !bestNode.querySelector('h1') && !!parent.querySelector('h1') && parentLd < 0.35;
+      var addsHeroOrLead = parentLd < 0.25 && parentLen > bestLen && parentLen <= bestLen * 1.3 &&
+        !!parent.querySelector('figure, img') && !bestNode.querySelector('figure');
+      var addsLeadSameDensity = parentLd <= linkDensity(bestNode) + 0.03 && parentLd < 0.25 &&
+        parentLen > bestLen + 40 && parentLen <= bestLen * 1.25;
+      if (addsH1 || addsHeroOrLead || addsLeadSameDensity) {
         bestNode = parent;
+      } else {
+        break;
       }
     }
 
@@ -315,6 +363,7 @@ object ArticleExtractorScript {
     var BOILERPLATE_RE = /^(spiegel bei google bevorzugen|prefer the guardian on google|add .+ as a preferred source|see more of our coverage|support the guardian|fund independent journalism|make a year-end gift|print subscriptions|newsletters|listen\s*[·•]|share|bookmark|zur merkliste|bild vergrößern|sign in|subscribe|log in|anmelden|abonnement|skip to main content|skip to navigation)$/i;
 
     function pushParagraph(el) {
+      if (isInsideLink(el)) return;
       var raw = cleanSpace(el.innerText);
       if (raw.length < 25) return;
       if (raw === title || raw === byline || raw === publishedDate) return;
@@ -342,13 +391,14 @@ object ArticleExtractorScript {
 
     function walk(node) {
       if (!node || node.nodeType !== 1) return;
-      if (node === titleEl || node === h1 || isHidden(node) || isNoise(node)) return;
+      if (node === titleEl || node === h1 || isSelfHidden(node) || isNoise(node)) return;
 
       var tag = node.tagName;
       if (tag === 'FIGURE') {
         var img = node.querySelector('img');
         var fc = node.querySelector('figcaption');
-        if (img) pushImage(img, fc ? fc.innerText : null);
+        var capText = fc ? fc.innerText : cleanSpace(node.innerText);
+        if (img) pushImage(img, capText || null);
         return;
       }
       if (tag === 'IMG') {
@@ -356,6 +406,7 @@ object ArticleExtractorScript {
         return;
       }
       if (tag === 'H2' || tag === 'H3' || tag === 'H4') {
+        if (isInsideLink(node)) return;
         var ht = cleanSpace(node.innerText);
         if (ht.length >= 3 && ht.length <= 220 && ht !== title && !BOILERPLATE_RE.test(ht) && !seenTexts[ht]) {
           seenTexts[ht] = true;
@@ -392,6 +443,7 @@ object ArticleExtractorScript {
         return;
       }
       if (tag === 'DIV' && isLeafTextBlock(node)) {
+        if (isInsideLink(node)) return;
         var dt = cleanSpace(node.innerText);
         if (dt.length >= 4 && dt.length <= 200 && getFontSize(node) >= 21 && isBoldWeight(node) &&
             dt !== title && !BOILERPLATE_RE.test(dt) && linkDensity(node) < 0.3 && !seenTexts[dt]) {
@@ -420,7 +472,7 @@ object ArticleExtractorScript {
       var imgs = root.querySelectorAll('img');
       for (var k = 0; k < imgs.length && k < 15; k++) {
         var im = imgs[k];
-        if (isHidden(im) || isNoise(im)) continue;
+        if (isHidden(im) || isInNoise(im)) continue;
         var src = resolveImgSrc(im);
         if (src && isGoodImage(im)) {
           var cap = cleanSpace(im.getAttribute('alt') || '');
