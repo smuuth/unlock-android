@@ -29,7 +29,7 @@ class ClipboardActivity : Activity() {
         val clip = clipboard?.primaryClip
         val texts = (0 until (clip?.itemCount ?: 0)).map { clip!!.getItemAt(it).coerceToText(this)?.toString() }
         val override = ShortcutPublisher.targetForShortcut(intent.getStringExtra(EXTRA_TARGET))
-        ShareActivity.openFromTexts(this, texts, override)
+        ShareActivity.openFromTexts(this, texts, override, source = "clipboard")
         finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)

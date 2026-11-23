@@ -10,12 +10,31 @@ import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import dev.unlock.R
+import dev.unlock.archive.ArchiveDomain
+import dev.unlock.reader.ReaderActivity
+import dev.unlock.settings.OpenMode
 
-/** Öffnet die Ziel-URL im Custom Tab oder im Standardbrowser. */
+/** Öffnet die Ziel-URL im integrierten Lesemodus, im Custom Tab oder im Standardbrowser. */
 object LinkOpener {
 
     /** @return `false`, wenn überhaupt keine App die URL öffnen kann. */
-    fun open(activity: Activity, url: String, useCustomTabs: Boolean): Boolean {
+    fun open(
+        activity: Activity,
+        targetUrl: String,
+        originalUrl: String,
+        domain: ArchiveDomain,
+        openMode: OpenMode,
+    ): Boolean = when (openMode) {
+        OpenMode.READER -> {
+            activity.startActivity(ReaderActivity.createIntent(activity, targetUrl, originalUrl, domain))
+            true
+        }
+        OpenMode.CUSTOM_TAB -> openExternal(activity, targetUrl, useCustomTabs = true)
+        OpenMode.BROWSER -> openExternal(activity, targetUrl, useCustomTabs = false)
+    }
+
+    /** Öffnet eine URL extern im Custom Tab oder Standardbrowser. */
+    fun openExternal(activity: Activity, url: String, useCustomTabs: Boolean): Boolean {
         val uri = url.toUri()
         val provider = if (useCustomTabs) customTabsPackage(activity) else null
         if (provider != null) {

@@ -26,8 +26,9 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setDomain(value: ArchiveDomain) = update { repo.setDomain(value) }
     fun setCleanUrls(value: Boolean) = update { repo.setCleanUrls(value) }
     fun setNormalizeAmp(value: Boolean) = update { repo.setNormalizeAmp(value) }
-    fun setUseCustomTabs(value: Boolean) = update { repo.setUseCustomTabs(value) }
+    fun setOpenMode(value: OpenMode) = update { repo.setOpenMode(value) }
     fun setHistoryEnabled(value: Boolean) = update { repo.setHistoryEnabled(value) }
+    fun setAnalyticsEnabled(value: Boolean) = update { repo.setAnalyticsEnabled(value) }
     fun clearHistory() = update { repo.clearHistory() }
 
     private fun update(block: suspend () -> Unit) {

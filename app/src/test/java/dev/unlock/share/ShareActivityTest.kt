@@ -7,8 +7,9 @@ import android.content.pm.ResolveInfo
 import android.os.Looper
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.test.core.app.ApplicationProvider
-import dev.unlock.shortcuts.ShortcutPublisher
 import dev.unlock.archive.ArchiveTarget
+import dev.unlock.reader.ReaderActivity
+import dev.unlock.shortcuts.ShortcutPublisher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -29,7 +30,6 @@ class ShareActivityTest {
     private val app: Application = ApplicationProvider.getApplicationContext()
 
     @Before fun registerBrowser() {
-        // Robolectric kennt keinen Browser – wir registrieren einen für https-Links.
         val browser = ResolveInfo().apply {
             activityInfo = android.content.pm.ActivityInfo().apply {
                 packageName = "com.example.browser"
@@ -51,14 +51,15 @@ class ShareActivityTest {
         return activity to shadowOf(activity).nextStartedActivity
     }
 
-    @Test fun sendTextOpensArchiveAndFinishes() {
+    @Test fun sendTextOpensReaderAndFinishes() {
         val (activity, started) = share(
             Intent(Intent.ACTION_SEND).setType("text/plain")
                 .putExtra(Intent.EXTRA_TEXT, "Spannender Artikel https://example.com/story?utm_source=x."),
         )
         assertTrue(activity.isFinishing)
-        assertEquals(Intent.ACTION_VIEW, started!!.action)
-        assertEquals("https://archive.ph/newest/https://example.com/story", started.dataString)
+        assertEquals(ReaderActivity::class.java.name, started!!.component?.className)
+        assertEquals("https://archive.ph/newest/https://example.com/story", started.getStringExtra(ReaderActivity.EXTRA_ARCHIVE_URL))
+        assertEquals("https://example.com/story", started.getStringExtra(ReaderActivity.EXTRA_ORIGINAL_URL))
     }
 
     @Test fun processTextIsSupported() {
@@ -66,7 +67,7 @@ class ShareActivityTest {
             Intent(Intent.ACTION_PROCESS_TEXT).setType("text/plain")
                 .putExtra(Intent.EXTRA_PROCESS_TEXT, "https://example.org/a"),
         )
-        assertEquals("https://archive.ph/newest/https://example.org/a", started!!.dataString)
+        assertEquals("https://archive.ph/newest/https://example.org/a", started!!.getStringExtra(ReaderActivity.EXTRA_ARCHIVE_URL))
     }
 
     @Test fun subjectIsFallback() {
@@ -75,7 +76,7 @@ class ShareActivityTest {
                 .putExtra(Intent.EXTRA_TEXT, "Nur ein Titel")
                 .putExtra(Intent.EXTRA_SUBJECT, "https://example.net/s"),
         )
-        assertEquals("https://archive.ph/newest/https://example.net/s", started!!.dataString)
+        assertEquals("https://archive.ph/newest/https://example.net/s", started!!.getStringExtra(ReaderActivity.EXTRA_ARCHIVE_URL))
     }
 
     @Test fun directShareShortcutOverridesService() {
@@ -84,7 +85,7 @@ class ShareActivityTest {
                 .putExtra(Intent.EXTRA_TEXT, "https://example.com/a")
                 .putExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID, ShortcutPublisher.shortcutId(ArchiveTarget.WAYBACK)),
         )
-        assertEquals("https://web.archive.org/web/https://example.com/a", started!!.dataString)
+        assertEquals("https://web.archive.org/web/https://example.com/a", started!!.getStringExtra(ReaderActivity.EXTRA_ARCHIVE_URL))
     }
 
     @Test fun noLinkShowsToastAndFinishes() {

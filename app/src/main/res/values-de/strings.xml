@@ -44,10 +44,46 @@
     <string name="setting_clean_desc">Tracking-Parameter entfernen und Weiterleitungen auflösen</string>
     <string name="setting_amp">Desktop-Seiten bevorzugen</string>
     <string name="setting_amp_desc">AMP- und Mobil-Links (amp., m.) in normale Seiten umwandeln</string>
-    <string name="setting_custom_tabs">Im Custom Tab öffnen</string>
-    <string name="setting_custom_tabs_desc">Aus: im Standardbrowser öffnen</string>
+    <string name="setting_open_mode">Artikel öffnen in</string>
+    <string name="open_mode_reader">Lesemodus</string>
+    <string name="open_mode_custom_tab">Custom Tab</string>
+    <string name="open_mode_browser">Browser</string>
+    <string name="open_mode_reader_desc">Klare mobile Leseansicht mit Typografie &amp; Themes. Captchas erscheinen automatisch direkt in der App.</string>
+    <string name="open_mode_custom_tab_desc">Öffnet die archivierte Seite in einem Browser-Custom-Tab.</string>
+    <string name="open_mode_browser_desc">Übergibt den Link direkt an deinen Standardbrowser.</string>
     <string name="setting_history">Verlauf speichern</string>
     <string name="setting_history_desc">Merkt sich die letzten 20 Links, nur auf diesem Gerät</string>
+    <string name="setting_analytics">Anonyme Nutzungsstatistik</string>
+    <string name="setting_analytics_desc">Zählt rein anonym, welche Funktionen genutzt werden – niemals gelesene Links oder Inhalte</string>
+
+    <string name="reader_back">Zurück</string>
+    <string name="reader_appearance">Darstellung</string>
+    <string name="reader_show_original">Original-Ansicht</string>
+    <string name="reader_show_reader">Lesemodus</string>
+    <string name="reader_more">Weitere Optionen</string>
+    <string name="reader_loading">Lade Artikel…</string>
+    <string name="reader_reading_time">%1$d Min. Lesezeit</string>
+    <string name="reader_share">Teilen</string>
+    <string name="reader_footer_source">Archiviert über %1$s</string>
+    <string name="reader_menu_wayback">Mit Wayback öffnen</string>
+    <string name="reader_menu_other_domain">Mit %1$s versuchen</string>
+    <string name="reader_menu_rearchive">Neu archivieren</string>
+    <string name="reader_menu_share_original">Original-Link teilen</string>
+    <string name="reader_menu_share_archive">Archiv-Link teilen</string>
+    <string name="reader_menu_open_browser">Im Browser öffnen</string>
+    <string name="reader_banner_captcha">Sicherheitsabfrage kurz lösen – danach öffnet sich automatisch der Lesemodus.</string>
+    <string name="reader_banner_no_results">Noch kein Snapshot vorhanden. Tippe unten auf „archive this url“ oder wechsle zur Wayback Machine.</string>
+    <string name="reader_banner_submitting">Neuer Snapshot wird erstellt – der Lesemodus öffnet sich automatisch, sobald er fertig ist.</string>
+    <string name="reader_banner_other_domain">Andere Domain</string>
+    <string name="reader_theme_title">Farbschema</string>
+    <string name="reader_theme_system">System</string>
+    <string name="reader_theme_light">Hell</string>
+    <string name="reader_theme_sepia">Sepia</string>
+    <string name="reader_theme_dark">Dunkel</string>
+    <string name="reader_font_title">Schriftart</string>
+    <string name="reader_font_serif">Serif</string>
+    <string name="reader_font_sans">Sans-Serif</string>
+    <string name="reader_font_size_title">Schriftgröße</string>
 
     <string name="section_history">Zuletzt geöffnet</string>
     <string name="history_clear">Löschen</string>
@@ -56,6 +92,6 @@
 
     <string name="section_about">Info</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Unlock sammelt keine Daten. Keine Internet-Berechtigung, kein Analytics, keine Werbung. Links werden direkt an deinen Browser übergeben.</string>
+    <string name="about_privacy">Unlock sammelt keine persönlichen Daten, keine Werbung und sendet niemals gelesene Links oder Artikelinhalte. Optionale anonyme Nutzungsstatistiken (TelemetryDeck) lassen sich oben jederzeit abschalten.</string>
     <string name="about_archive">archive.today und die Wayback Machine sind unabhängige Fremdangebote. Sie können Captchas zeigen, ihre Domain wechseln oder zeitweise nicht erreichbar sein.</string>
 </resources>

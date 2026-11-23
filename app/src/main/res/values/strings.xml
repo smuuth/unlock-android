@@ -45,10 +45,46 @@
     <string name="setting_clean_desc">Remove tracking parameters and resolve redirects</string>
     <string name="setting_amp">Prefer desktop pages</string>
     <string name="setting_amp_desc">Turn AMP and mobile links (amp., m.) into normal pages</string>
-    <string name="setting_custom_tabs">Open in Custom Tab</string>
-    <string name="setting_custom_tabs_desc">Off: open in your default browser app</string>
+    <string name="setting_open_mode">Open articles in</string>
+    <string name="open_mode_reader">Reader</string>
+    <string name="open_mode_custom_tab">Custom Tab</string>
+    <string name="open_mode_browser">Browser</string>
+    <string name="open_mode_reader_desc">Clean mobile reading view with typography &amp; themes. Captchas open inline automatically.</string>
+    <string name="open_mode_custom_tab_desc">Opens the archived page in a browser Custom Tab.</string>
+    <string name="open_mode_browser_desc">Hands the link straight to your default browser app.</string>
     <string name="setting_history">Remember history</string>
     <string name="setting_history_desc">Keeps the last 20 links on this device only</string>
+    <string name="setting_analytics">Anonymous usage stats</string>
+    <string name="setting_analytics_desc">Counts which features are used anonymously – never any links or article content</string>
+
+    <string name="reader_back">Back</string>
+    <string name="reader_appearance">Appearance</string>
+    <string name="reader_show_original">Original view</string>
+    <string name="reader_show_reader">Reader view</string>
+    <string name="reader_more">More options</string>
+    <string name="reader_loading">Loading article…</string>
+    <string name="reader_reading_time">%1$d min read</string>
+    <string name="reader_share">Share</string>
+    <string name="reader_footer_source">Archived via %1$s</string>
+    <string name="reader_menu_wayback">Open with Wayback</string>
+    <string name="reader_menu_other_domain">Try %1$s</string>
+    <string name="reader_menu_rearchive">Archive again</string>
+    <string name="reader_menu_share_original">Share original link</string>
+    <string name="reader_menu_share_archive">Share archive link</string>
+    <string name="reader_menu_open_browser">Open in browser</string>
+    <string name="reader_banner_captcha">Complete the security check below – Reader view will open automatically right after.</string>
+    <string name="reader_banner_no_results">No snapshot found yet. Tap “archive this url” below or switch to the Wayback Machine.</string>
+    <string name="reader_banner_submitting">Creating a fresh snapshot – Reader view will open automatically once ready.</string>
+    <string name="reader_banner_other_domain">Other domain</string>
+    <string name="reader_theme_title">Theme</string>
+    <string name="reader_theme_system">System</string>
+    <string name="reader_theme_light">Light</string>
+    <string name="reader_theme_sepia">Sepia</string>
+    <string name="reader_theme_dark">Dark</string>
+    <string name="reader_font_title">Typeface</string>
+    <string name="reader_font_serif">Serif</string>
+    <string name="reader_font_sans">Sans-serif</string>
+    <string name="reader_font_size_title">Text size</string>
 
     <string name="section_history">Recently opened</string>
     <string name="history_clear">Clear</string>
@@ -57,6 +93,6 @@
 
     <string name="section_about">About</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Unlock collects no data. No internet permission, no analytics, no ads. Links are handed straight to your browser.</string>
+    <string name="about_privacy">Unlock collects no personal data, no ads, and never sends any URLs or article content. Optional anonymous usage stats (TelemetryDeck) can be turned off anytime above.</string>
     <string name="about_archive">archive.today and the Wayback Machine are independent third-party services. They may show captchas, change domains or be temporarily unavailable.</string>
 </resources>
