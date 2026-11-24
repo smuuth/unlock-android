@@ -131,6 +131,7 @@ fun ReaderScreen(
     onUpdateFont: (ReaderFont) -> Unit,
     onUpdateFontScale: (Float) -> Unit,
     onTrackEvent: (String, Map<String, String>) -> Unit = { _, _ -> },
+    onArticleRead: (Article) -> Unit = {},
     onOpenInBrowser: (String) -> Unit,
     onShareUrl: (String) -> Unit,
     onBack: () -> Unit,
@@ -151,6 +152,8 @@ fun ReaderScreen(
     var userAgent by remember { mutableStateOf<String?>(null) }
     var extractionJob by remember { mutableStateOf<Job?>(null) }
     var mainFrameErrorUrl by remember { mutableStateOf<String?>(null) }
+    // Pro Leseansicht nur einmal zählen, auch wenn erneut extrahiert wird.
+    var articleCounted by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
     val readingProgress by remember {
@@ -209,6 +212,10 @@ fun ReaderScreen(
                 when (val result = ArticleParser.parse(raw, originalUrl, loadedUrl)) {
                     is ExtractionResult.ArticleFound -> {
                         state = ReaderState.ArticleReady(result.article)
+                        if (!articleCounted) {
+                            articleCounted = true
+                            onArticleRead(result.article)
+                        }
                         val service = if ("web.archive.org" in loadedUrl) "wayback" else "archive.today"
                         onTrackEvent(
                             "Unlock.Reader.extracted",

@@ -4,6 +4,7 @@ import android.app.Application
 import dev.unlock.analytics.TelemetryClient
 import dev.unlock.settings.SettingsRepository
 import dev.unlock.shortcuts.ShortcutPublisher
+import dev.unlock.stats.StatsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +18,9 @@ class UnlockApp : Application() {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val settingsRepository by lazy { SettingsRepository(this) }
+
+    /** Lokale Statistik – bleibt ausschließlich auf dem Gerät. */
+    val statsRepository by lazy { StatsRepository(this) }
 
     val telemetry by lazy { TelemetryClient(settingsRepository, appScope) }
 

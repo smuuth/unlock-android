@@ -56,6 +56,11 @@ class ReaderActivity : ComponentActivity() {
                     },
                     onUpdateFontScale = { scale -> unlockApp.appScope.launch { repo.setReaderFontScale(scale) } },
                     onTrackEvent = { type, params -> unlockApp.telemetry.track(type, params) },
+                    onArticleRead = { article ->
+                        unlockApp.appScope.launch {
+                            unlockApp.statsRepository.recordArticleRead(article.wordCount(), article.readingTimeMinutes)
+                        }
+                    },
                     onOpenInBrowser = { url -> LinkOpener.openExternal(this, url, useCustomTabs = false) },
                     onShareUrl = { url ->
                         startActivity(

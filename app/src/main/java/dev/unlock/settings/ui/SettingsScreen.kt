@@ -7,6 +7,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.toShape
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
@@ -88,6 +91,11 @@ import dev.unlock.settings.Settings
 import dev.unlock.settings.SettingsViewModel
 import dev.unlock.share.LinkProcessor
 import dev.unlock.share.ShareActivity
+import dev.unlock.stats.StatsActivity
+import dev.unlock.stats.UnlockStats
+import dev.unlock.stats.ui.PillBarChart
+import dev.unlock.stats.ui.formatEuro
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 private val CardShape = RoundedCornerShape(28.dp)
@@ -97,6 +105,9 @@ private val CardShape = RoundedCornerShape(28.dp)
 fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
+    val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val openStats = { context.startActivity(StatsActivity.createIntent(context)) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -106,6 +117,11 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
             LargeFlexibleTopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 subtitle = { Text(stringResource(R.string.subtitle)) },
+                actions = {
+                    IconButton(onClick = openStats) {
+                        Icon(painterResource(R.drawable.ic_insights), stringResource(R.string.stats_open))
+                    }
+                },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -132,6 +148,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsVi
         ) {
             item(key = "hero") { HowItWorksCard() }
             item(key = "test") { TryItCard(current) }
+            stats?.takeIf { it.enabled }?.let { item(key = "stats") { StatsTeaserCard(it, onClick = openStats) } }
             item(key = "service-header") { SectionHeader(stringResource(R.string.section_service)) }
             item(key = "service") { ServiceSection(current, viewModel) }
             item(key = "behavior-header") { SectionHeader(stringResource(R.string.section_behavior)) }
@@ -285,6 +302,48 @@ private fun TryItCard(settings: Settings) {
     }
 }
 
+/** Kompakte Vorschau: Gesamtzahl, gespartes Geld und eine Mini-Woche. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun StatsTeaserCard(stats: UnlockStats, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val today = remember { LocalDate.now() }
+    Surface(onClick = onClick, color = colors.secondaryContainer, contentColor = colors.onSecondaryContainer, shape = CardShape) {
+        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(48.dp).background(colors.secondary, MaterialShapes.Cookie9Sided.toShape()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.ic_insights), null, tint = colors.onSecondary, modifier = Modifier.size(24.dp))
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.stats_teaser_title), style = MaterialTheme.typography.titleMediumEmphasized)
+                Text(
+                    if (stats.isEmpty) stringResource(R.string.stats_teaser_empty)
+                    else stringResource(R.string.stats_teaser_body, stats.total, formatEuro(stats.savedCents, locale)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSecondaryContainer.copy(alpha = 0.8f),
+                )
+            }
+            if (!stats.isEmpty) {
+                Spacer(Modifier.width(12.dp))
+                PillBarChart(
+                    values = stats.dailySeries(today, 7).map { it.second },
+                    labels = List(7) { null },
+                    highlightIndex = 6,
+                    chartHeight = 36.dp,
+                    description = "",
+                    modifier = Modifier.width(64.dp),
+                )
+            }
+            Spacer(Modifier.width(4.dp))
+            Icon(painterResource(R.drawable.ic_chevron_right), null)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ServiceSection(settings: Settings, viewModel: SettingsViewModel) {
@@ -354,7 +413,7 @@ private fun ServiceSection(settings: Settings, viewModel: SettingsViewModel) {
 /** Connected Button Group (Expressive): Segmente, deren Ecken beim Auswählen/Drücken morphen. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ConnectedToggleRow(labels: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit) {
+internal fun ConnectedToggleRow(labels: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
         modifier = Modifier.fillMaxWidth(),
