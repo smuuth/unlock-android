@@ -57,6 +57,7 @@ class SettingsRepository(context: Context) {
     suspend fun markUnlocked() = store.edit { it[Keys.HAS_UNLOCKED] = true }
     suspend fun setReaderTheme(theme: ReaderTheme) = store.edit { it[Keys.READER_THEME] = theme.id }
     suspend fun setReaderFont(font: ReaderFont) = store.edit { it[Keys.READER_FONT] = font.id }
+    suspend fun setReaderJustify(value: Boolean) = store.edit { it[Keys.READER_JUSTIFY] = value }
     suspend fun setReaderFontScale(scale: Float) = store.edit {
         it[Keys.READER_FONT_SCALE] = scale.coerceIn(0.85f, 1.45f)
     }
@@ -111,6 +112,7 @@ class SettingsRepository(context: Context) {
             readerTheme = ReaderTheme.fromId(this[Keys.READER_THEME]),
             readerFont = ReaderFont.fromId(this[Keys.READER_FONT]),
             readerFontScale = (this[Keys.READER_FONT_SCALE] ?: 1.05f).coerceIn(0.85f, 1.45f),
+            readerJustify = this[Keys.READER_JUSTIFY] ?: false,
             hasUnlocked = this[Keys.HAS_UNLOCKED] ?: false,
         )
     }
@@ -125,6 +127,7 @@ class SettingsRepository(context: Context) {
         val READER_THEME = stringPreferencesKey("reader_theme")
         val READER_FONT = stringPreferencesKey("reader_font")
         val READER_FONT_SCALE = floatPreferencesKey("reader_font_scale")
+        val READER_JUSTIFY = booleanPreferencesKey("reader_justify")
         val HISTORY_ENABLED = booleanPreferencesKey("history_enabled")
         val HISTORY = stringPreferencesKey("history")
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")

@@ -7,6 +7,8 @@ data class Article(
     val byline: String? = null,
     val publishedDate: String? = null,
     val siteName: String? = null,
+    /** BCP-47-Sprachcode (z. B. `de`, `en-US`) für die Silbentrennung; `null` = Systemsprache. */
+    val language: String? = null,
     val readingTimeMinutes: Int = 1,
     val sourceUrl: String,
     val archiveUrl: String,

@@ -72,6 +72,8 @@
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans-serif</string>
     <string name="reader_font_size_title">Text size</string>
+    <string name="reader_justify_title">Justified text</string>
+    <string name="reader_justify_summary">Even right margin, with hyphenation</string>
 
     <string name="section_history">Recently opened</string>
     <string name="history_clear">Clear</string>

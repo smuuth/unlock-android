@@ -82,4 +82,26 @@ class ArticleParserTest {
         assertEquals(ExtractionResult.NotAnArticle, ArticleParser.parse("null", "https://a.de", "https://archive.ph"))
         assertEquals(ExtractionResult.NotAnArticle, ArticleParser.parse("not json", "https://a.de", "https://archive.ph"))
     }
+
+    @Test fun normalizesLanguageTags() {
+        assertEquals("de-DE", ArticleParser.normalizeLanguage("de_DE"))
+        assertEquals("en", ArticleParser.normalizeLanguage(" en "))
+        assertEquals(null, ArticleParser.normalizeLanguage("not a language"))
+        assertEquals(null, ArticleParser.normalizeLanguage(""))
+    }
+
+    @Test fun guessesLanguageFromFunctionWords() {
+        fun para(t: String) = ArticleBlock.Paragraph(listOf(InlineSpan(t, false, false, null)))
+        val german = listOf(para("Die Regierung hat sich auf einen Kompromiss geeinigt, der auch für die Länder gilt und nicht mehr verändert wird."))
+        val english = listOf(para("The government said that it was not willing to change the plan, and this is the final word for the states."))
+        assertEquals("de", ArticleParser.guessLanguage(german))
+        assertEquals("en", ArticleParser.guessLanguage(english))
+        assertEquals(null, ArticleParser.guessLanguage(listOf(para("Kurz."))))
+    }
+
+    @Test fun readsLanguageFromExtractorResult() {
+        val json = """{"status":"article","article":{"title":"Ein Titel","language":"de-AT","blocks":[{"type":"paragraph","spans":[{"text":"Hallo"}]}]}}"""
+        val res = ArticleParser.parse(json, "https://www.derstandard.at/a", "https://archive.ph/1") as ExtractionResult.ArticleFound
+        assertEquals("de-AT", res.article.language)
+    }
 }

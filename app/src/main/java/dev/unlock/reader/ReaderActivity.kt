@@ -55,6 +55,10 @@ class ReaderActivity : ComponentActivity() {
                         unlockApp.telemetry.track("Unlock.Reader.appearanceChanged", mapOf("font" to font.id))
                     },
                     onUpdateFontScale = { scale -> unlockApp.appScope.launch { repo.setReaderFontScale(scale) } },
+                    onUpdateJustify = { justify ->
+                        unlockApp.appScope.launch { repo.setReaderJustify(justify) }
+                        unlockApp.telemetry.track("Unlock.Reader.appearanceChanged", mapOf("justify" to justify.toString()))
+                    },
                     onTrackEvent = { type, params -> unlockApp.telemetry.track(type, params) },
                     onArticleRead = { article ->
                         unlockApp.appScope.launch {

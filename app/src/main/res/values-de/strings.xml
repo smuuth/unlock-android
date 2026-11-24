@@ -71,6 +71,8 @@
     <string name="reader_font_serif">Serif</string>
     <string name="reader_font_sans">Sans-Serif</string>
     <string name="reader_font_size_title">Schriftgröße</string>
+    <string name="reader_justify_title">Blocksatz</string>
+    <string name="reader_justify_summary">Gerader rechter Rand, mit Silbentrennung</string>
 
     <string name="section_history">Zuletzt geöffnet</string>
     <string name="history_clear">Löschen</string>

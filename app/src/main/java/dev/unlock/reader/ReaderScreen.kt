@@ -40,7 +40,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -91,10 +91,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -130,6 +137,7 @@ fun ReaderScreen(
     onUpdateTheme: (ReaderTheme) -> Unit,
     onUpdateFont: (ReaderFont) -> Unit,
     onUpdateFontScale: (Float) -> Unit,
+    onUpdateJustify: (Boolean) -> Unit,
     onTrackEvent: (String, Map<String, String>) -> Unit = { _, _ -> },
     onArticleRead: (Article) -> Unit = {},
     onOpenInBrowser: (String) -> Unit,
@@ -491,6 +499,7 @@ fun ReaderScreen(
                     palette = palette,
                     font = settings.readerFont,
                     fontScale = settings.readerFontScale,
+                    justify = settings.readerJustify,
                     userAgent = userAgent,
                     listState = listState,
                     onOpenLink = onOpenInBrowser,
@@ -507,9 +516,11 @@ fun ReaderScreen(
             currentTheme = settings.readerTheme,
             currentFont = settings.readerFont,
             currentFontScale = settings.readerFontScale,
+            currentJustify = settings.readerJustify,
             onSelectTheme = onUpdateTheme,
             onSelectFont = onUpdateFont,
             onChangeFontScale = onUpdateFontScale,
+            onChangeJustify = onUpdateJustify,
             onDismiss = { showAppearanceSheet = false },
         )
     }
@@ -661,6 +672,7 @@ private fun ArticleReaderContent(
     palette: ReaderPalette,
     font: ReaderFont,
     fontScale: Float,
+    justify: Boolean,
     userAgent: String?,
     listState: androidx.compose.foundation.lazy.LazyListState,
     onOpenLink: (String) -> Unit,
@@ -672,6 +684,38 @@ private fun ArticleReaderContent(
     val bodyLineHeight = (18f * fontScale * 1.62f).sp
     val titleSize = (28f * fontScale).sp
     val titleLineHeight = (28f * fontScale * 1.22f).sp
+
+    // Silbentrennung braucht die Sprache des Texts, sonst würde z. B. ein englischer
+    // Artikel nach deutschen Regeln getrennt. Ohne Angabe gilt die Systemsprache.
+    val localeList = remember(article.language) {
+        article.language?.let { runCatching { LocaleList(it) }.getOrNull() }
+    }
+    // Fließtext: Umbruch über den ganzen Absatz optimiert + Silbentrennung. Das glättet
+    // schon den Flattersatz und ist Voraussetzung für Blocksatz ohne Löcher.
+    val bodyStyle = remember(font, fontScale, justify, localeList, palette.text) {
+        TextStyle(
+            fontFamily = font.family,
+            fontSize = bodySize,
+            lineHeight = bodyLineHeight,
+            color = palette.text,
+            textAlign = if (justify) TextAlign.Justify else TextAlign.Start,
+            lineBreak = LineBreak.Paragraph,
+            hyphens = Hyphens.Auto,
+            localeList = localeList,
+        )
+    }
+    // Überschriften: ausgewogene Zeilen. Silbentrennung trotzdem an, sonst werden lange
+    // Komposita wie „Bundesverfassungsgericht“ in großer Schrift hart mitten im Wort umbrochen.
+    val headingStyle = remember(font, localeList, palette.text) {
+        TextStyle(
+            fontFamily = font.family,
+            fontWeight = FontWeight.Bold,
+            color = palette.text,
+            lineBreak = LineBreak.Heading,
+            hyphens = Hyphens.Auto,
+            localeList = localeList,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -686,7 +730,6 @@ private fun ArticleReaderContent(
                     .fillMaxSize()
                     .widthIn(max = 680.dp),
                 contentPadding = PaddingValues(horizontal = 22.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // Header: Quelle + Lesezeit + Titel + Autor/Datum
                 item(key = "article-header") {
@@ -720,11 +763,7 @@ private fun ArticleReaderContent(
 
                         Text(
                             text = article.title,
-                            fontFamily = font.family,
-                            fontSize = titleSize,
-                            lineHeight = titleLineHeight,
-                            fontWeight = FontWeight.Bold,
-                            color = palette.text,
+                            style = headingStyle.copy(fontSize = titleSize, lineHeight = titleLineHeight),
                         )
 
                         val metaParts = listOfNotNull(article.byline, article.publishedDate)
@@ -743,123 +782,120 @@ private fun ArticleReaderContent(
                 }
 
                 // Artikel-Blöcke
-                items(article.blocks) { block ->
-                    when (block) {
-                        is ArticleBlock.Paragraph -> {
-                            val annotated = remember(block, palette.accent) {
-                                buildAnnotatedString {
-                                    for (span in block.spans) {
-                                        val style = SpanStyle(
-                                            fontWeight = if (span.bold) FontWeight.Bold else null,
-                                            fontStyle = if (span.italic) FontStyle.Italic else null,
-                                        )
-                                        val link = span.link
-                                        if (link != null) {
-                                            pushLink(
-                                                LinkAnnotation.Url(
-                                                    url = link,
-                                                    styles = TextLinkStyles(
-                                                        style = style.copy(
-                                                            color = palette.accent,
-                                                            textDecoration = TextDecoration.Underline,
-                                                        ),
-                                                    ),
-                                                    linkInteractionListener = { onOpenLink(link) },
-                                                ),
+                itemsIndexed(article.blocks) { index, block ->
+                    // Überschriften gehören zum folgenden Absatz: viel Luft davor, wenig danach.
+                    val previous = article.blocks.getOrNull(index - 1)
+                    val gap = when {
+                        index == 0 -> 20.dp
+                        block is ArticleBlock.Heading -> 30.dp
+                        previous is ArticleBlock.Heading -> 10.dp
+                        else -> 16.dp
+                    }
+                    Column {
+                        Spacer(Modifier.height(gap))
+                        when (block) {
+                            is ArticleBlock.Paragraph -> {
+                                val annotated = remember(block, palette.accent) {
+                                    buildAnnotatedString {
+                                        for (span in block.spans) {
+                                            val style = SpanStyle(
+                                                fontWeight = if (span.bold) FontWeight.Bold else null,
+                                                fontStyle = if (span.italic) FontStyle.Italic else null,
                                             )
-                                            append(span.text)
-                                            pop()
-                                        } else {
-                                            pushStyle(style)
-                                            append(span.text)
-                                            pop()
+                                            val link = span.link
+                                            if (link != null) {
+                                                pushLink(
+                                                    LinkAnnotation.Url(
+                                                        url = link,
+                                                        styles = TextLinkStyles(
+                                                            style = style.copy(
+                                                                color = palette.accent,
+                                                                textDecoration = TextDecoration.Underline,
+                                                            ),
+                                                        ),
+                                                        linkInteractionListener = { onOpenLink(link) },
+                                                    ),
+                                                )
+                                                append(span.text)
+                                                pop()
+                                            } else {
+                                                pushStyle(style)
+                                                append(span.text)
+                                                pop()
+                                            }
                                         }
                                     }
                                 }
+                                Text(text = annotated, style = bodyStyle)
                             }
-                            Text(
-                                text = annotated,
-                                fontFamily = font.family,
-                                fontSize = bodySize,
-                                lineHeight = bodyLineHeight,
-                                color = palette.text,
-                            )
-                        }
 
-                        is ArticleBlock.Heading -> {
-                            val size = when (block.level) {
-                                2 -> (22f * fontScale).sp
-                                3 -> (19.5f * fontScale).sp
-                                else -> (18f * fontScale).sp
-                            }
-                            Text(
-                                text = block.text,
-                                fontFamily = font.family,
-                                fontSize = size,
-                                lineHeight = (size.value * 1.3f).sp,
-                                fontWeight = FontWeight.Bold,
-                                color = palette.text,
-                                modifier = Modifier.padding(top = 10.dp),
-                            )
-                        }
-
-                        is ArticleBlock.Image -> {
-                            ArticleImageBlock(
-                                block = block,
-                                referer = article.archiveUrl,
-                                userAgent = userAgent,
-                                palette = palette,
-                            )
-                        }
-
-                        is ArticleBlock.Quote -> {
-                            Surface(
-                                color = palette.quoteBackground,
-                                shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Row(Modifier.fillMaxWidth().padding(16.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(3.5.dp)
-                                            .heightIn(min = 24.dp)
-                                            .clip(CircleShape)
-                                            .background(palette.accent),
-                                    )
-                                    Spacer(Modifier.width(14.dp))
-                                    Text(
-                                        text = block.text,
-                                        fontFamily = font.family,
-                                        fontSize = bodySize,
-                                        lineHeight = bodyLineHeight,
-                                        fontStyle = FontStyle.Italic,
-                                        color = palette.text.copy(alpha = 0.9f),
-                                    )
+                            is ArticleBlock.Heading -> {
+                                val size = when (block.level) {
+                                    2 -> (22f * fontScale).sp
+                                    3 -> (19.5f * fontScale).sp
+                                    else -> (18f * fontScale).sp
                                 }
+                                Text(
+                                    text = block.text,
+                                    style = headingStyle.copy(fontSize = size, lineHeight = (size.value * 1.3f).sp),
+                                )
                             }
-                        }
 
-                        is ArticleBlock.BulletList -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                block.items.forEachIndexed { idx, item ->
-                                    Row(Modifier.fillMaxWidth()) {
-                                        Text(
-                                            text = if (block.ordered) "${idx + 1}." else "•",
-                                            fontFamily = font.family,
-                                            fontSize = bodySize,
-                                            lineHeight = bodyLineHeight,
-                                            fontWeight = FontWeight.Bold,
-                                            color = palette.accent,
-                                            modifier = Modifier.width(24.dp),
+                            is ArticleBlock.Image -> {
+                                ArticleImageBlock(
+                                    block = block,
+                                    referer = article.archiveUrl,
+                                    userAgent = userAgent,
+                                    palette = palette,
+                                )
+                            }
+
+                            is ArticleBlock.Quote -> {
+                                Surface(
+                                    color = palette.quoteBackground,
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Row(Modifier.fillMaxWidth().padding(16.dp)) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(3.5.dp)
+                                                .heightIn(min = 24.dp)
+                                                .clip(CircleShape)
+                                                .background(palette.accent),
                                         )
+                                        Spacer(Modifier.width(14.dp))
                                         Text(
-                                            text = item,
-                                            fontFamily = font.family,
-                                            fontSize = bodySize,
-                                            lineHeight = bodyLineHeight,
-                                            color = palette.text,
+                                            text = block.text,
+                                            style = bodyStyle.copy(
+                                                fontStyle = FontStyle.Italic,
+                                                color = palette.text.copy(alpha = 0.9f),
+                                            ),
                                             modifier = Modifier.weight(1f),
                                         )
+                                    }
+                                }
+                            }
+
+                            is ArticleBlock.BulletList -> {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    block.items.forEachIndexed { idx, item ->
+                                        Row(Modifier.fillMaxWidth()) {
+                                            Text(
+                                                text = if (block.ordered) "${idx + 1}." else "•",
+                                                fontFamily = font.family,
+                                                fontSize = bodySize,
+                                                lineHeight = bodyLineHeight,
+                                                fontWeight = FontWeight.Bold,
+                                                color = palette.accent,
+                                                modifier = Modifier.width(24.dp),
+                                            )
+                                            Text(
+                                                text = item,
+                                                style = bodyStyle,
+                                                modifier = Modifier.weight(1f),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -869,7 +905,7 @@ private fun ArticleReaderContent(
 
                 // Artikel-Ende mit schnellen Aktionen
                 item(key = "article-footer") {
-                    Column(Modifier.padding(top = 20.dp)) {
+                    Column(Modifier.padding(top = 36.dp)) {
                         HorizontalDivider(color = palette.divider)
                         Spacer(Modifier.height(20.dp))
                         Surface(
@@ -969,9 +1005,11 @@ private fun AppearanceBottomSheet(
     currentTheme: ReaderTheme,
     currentFont: ReaderFont,
     currentFontScale: Float,
+    currentJustify: Boolean,
     onSelectTheme: (ReaderTheme) -> Unit,
     onSelectFont: (ReaderFont) -> Unit,
     onChangeFontScale: (Float) -> Unit,
+    onChangeJustify: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -1100,6 +1138,31 @@ private fun AppearanceBottomSheet(
                     )
                     Text("A", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
+            }
+
+            // Blocksatz
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .toggleable(
+                        value = currentJustify,
+                        role = Role.Switch,
+                        onValueChange = onChangeJustify,
+                    )
+                    .padding(vertical = 4.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.reader_justify_title), style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        text = stringResource(R.string.reader_justify_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(checked = currentJustify, onCheckedChange = null)
             }
         }
     }
