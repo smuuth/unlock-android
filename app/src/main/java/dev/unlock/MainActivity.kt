@@ -24,5 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // Browser im Hintergrund aufwärmen, damit „Öffnen“ auf der Startseite sofort reagiert.
         LinkOpener.warmUp(this)
+        // Höchstens etwa einmal am Tag bei GitHub nach einer neuen Version fragen (offline: lautlos).
+        unlockApp.updates.checkIfDue()
     }
 }

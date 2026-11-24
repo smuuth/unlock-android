@@ -80,7 +80,7 @@
 
     <string name="section_about">About</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Unlock collects no personal data, shows no ads and never sends any links or article content. Anonymous usage data (TelemetryDeck) can be turned off anytime under Privacy.</string>
+    <string name="about_privacy">Unlock collects no personal data, shows no ads and never sends any links or article content. Anonymous usage data (TelemetryDeck) can be turned off anytime under Privacy. To find updates, Unlock asks GitHub about once a day for the latest version – no personal data is sent.</string>
     <string name="about_archive">archive.today and the Wayback Machine are independent third-party services. They may show captchas, change domains or be temporarily unavailable.</string>
     <!-- Statistik -->
     <string name="stats_title">Statistics</string>
@@ -161,4 +161,26 @@
     <string name="setting_browser_desc">Instead of the in-app browser. Only applies when reader view is off.</string>
     <string name="stats_show_more">Show more</string>
     <string name="stats_show_less">Show less</string>
+
+    <!-- Selbst-Update über GitHub Releases -->
+    <string name="section_updates">Updates</string>
+    <string name="update_title">Update available</string>
+    <string name="update_body">Version %1$s is ready – with improvements and fixes.</string>
+    <string name="update_install">Install now</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_downloading_percent">Downloading… %1$d %%</string>
+    <string name="update_installing">Opening the installer…</string>
+    <string name="update_error_download">The download didn’t work. Please check your internet connection and try again.</string>
+    <string name="update_error_invalid">The downloaded file doesn’t match this app. Please try again later.</string>
+    <string name="update_error_install">The installation didn’t work. Please try again.</string>
+    <string name="update_permission_title">One-time permission needed</string>
+    <string name="update_permission_body">To install updates, Android needs your OK once. On the next screen, turn on “Allow from this source” for Unlock, then come back – the update continues automatically.</string>
+    <string name="update_permission_open">Open settings</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_up_to_date">You’re on the latest version (%1$s).</string>
+    <string name="update_check_failed">Couldn’t check right now. Please try again later.</string>
+    <string name="update_last_checked">Last checked %1$s</string>
+    <string name="update_auto_hint">Checked automatically about once a day</string>
 </resources>

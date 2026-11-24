@@ -83,6 +83,7 @@ import dev.unlock.stats.StatsActivity
 import dev.unlock.stats.UnlockStats
 import dev.unlock.stats.ui.PillBarChart
 import dev.unlock.stats.ui.formatEuro
+import dev.unlock.unlockApp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -97,6 +98,7 @@ fun HomeScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewMo
     val history by viewModel.history.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val updateState by context.unlockApp.updates.state.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -134,6 +136,7 @@ fun HomeScreen(viewModel: SettingsViewModel = viewModel(factory = SettingsViewMo
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (updateState.available != null) item(key = "update") { UpdateCard() }
             item(key = "unlock") { UnlockCard(current, firstRun) }
             stats?.takeIf { it.enabled && !it.isEmpty }?.let { s ->
                 item(key = "stats") {

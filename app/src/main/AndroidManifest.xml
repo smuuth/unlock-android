@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Internet-Berechtigung ausschließlich zum Laden archivierter Artikel im integrierten Lesemodus. -->
+    <!-- Internet: archivierte Artikel im Lesemodus laden, anonyme Statistik (abschaltbar) und Update-Prüfung bei GitHub. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Selbst-Update: heruntergeladenes APK an den System-Installer übergeben (Nutzer bestätigt jedes Update). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <queries>
         <!-- Custom-Tabs-Anbieter und Browser finden (Package Visibility, Android 11+). -->
@@ -99,5 +101,10 @@
             android:name=".reader.ReaderActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
+
+        <!-- Status-Rückmeldung des System-Installers beim Selbst-Update. -->
+        <receiver
+            android:name=".update.UpdateInstallReceiver"
+            android:exported="false" />
     </application>
 </manifest>

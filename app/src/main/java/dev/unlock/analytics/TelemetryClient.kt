@@ -13,6 +13,7 @@ import java.net.URL
 import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Schlanker, anonymer TelemetryDeck-Client (Ingest API v2) ohne Drittanbieter-SDK.
@@ -29,6 +30,13 @@ class TelemetryClient(
     private val isTestMode: Boolean = BuildConfig.DEBUG,
 ) {
     private val sessionId: String = UUID.randomUUID().toString()
+    private val launchTracked = AtomicBoolean(false)
+
+    /** `Unlock.App.launched` – höchstens einmal pro Prozess (= Sitzung), gleiche Opt-out-Regeln wie [track]. */
+    fun trackLaunch() {
+        if (!launchTracked.compareAndSet(false, true)) return
+        track(SIGNAL_LAUNCHED)
+    }
 
     fun track(type: String, params: Map<String, String> = emptyMap()) {
         if (appId.isBlank()) return
@@ -77,6 +85,7 @@ class TelemetryClient(
 
     companion object {
         private const val INGEST_URL = "https://nom.telemetrydeck.com/v2/"
+        const val SIGNAL_LAUNCHED = "Unlock.App.launched"
 
         internal fun sha256Hex(input: String): String =
             MessageDigest.getInstance("SHA-256")

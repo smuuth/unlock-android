@@ -146,6 +146,13 @@ fun SettingsScreen(
                     AdvancedSection(current, viewModel)
                 }
             }
+            item(key = "updates-header") { SectionHeader(stringResource(R.string.section_updates)) }
+            item(key = "updates") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    UpdateCard()
+                    CheckForUpdatesItem()
+                }
+            }
             item(key = "about-header") { SectionHeader(stringResource(R.string.section_about)) }
             item(key = "about") { AboutCard() }
             item(key = "bottom") {
