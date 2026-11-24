@@ -30,6 +30,8 @@ data class Settings(
     val readerTheme: ReaderTheme = ReaderTheme.DEFAULT,
     val readerFont: ReaderFont = ReaderFont.DEFAULT,
     val readerFontScale: Float = 1.05f,
+    /** Wurde schon einmal ein Link geöffnet? Danach zeigt die Startseite keine Anleitung mehr. */
+    val hasUnlocked: Boolean = false,
 )
 
 data class HistoryEntry(val url: String, val timestamp: Long)

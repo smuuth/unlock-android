@@ -3,7 +3,6 @@ package dev.unlock.share
 import android.app.Activity
 import android.content.ClipboardManager
 import android.os.Bundle
-import dev.unlock.shortcuts.ShortcutPublisher
 
 /**
  * Ziel des Launcher-Shortcuts „Link aus Zwischenablage öffnen“.
@@ -28,8 +27,7 @@ class ClipboardActivity : Activity() {
         val clipboard = getSystemService(ClipboardManager::class.java)
         val clip = clipboard?.primaryClip
         val texts = (0 until (clip?.itemCount ?: 0)).map { clip!!.getItemAt(it).coerceToText(this)?.toString() }
-        val override = ShortcutPublisher.targetForShortcut(intent.getStringExtra(EXTRA_TARGET))
-        ShareActivity.openFromTexts(this, texts, override, source = "clipboard")
+        ShareActivity.openFromTexts(this, texts, source = "clipboard")
         finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
@@ -41,7 +39,6 @@ class ClipboardActivity : Activity() {
     }
 
     companion object {
-        const val EXTRA_TARGET = "dev.unlock.extra.TARGET"
         private const val KEY_HANDLED = "handled"
     }
 }

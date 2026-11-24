@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import dev.unlock.R
-import dev.unlock.archive.ArchiveTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -29,14 +28,13 @@ class ShortLinkActivity : Activity() {
             finishQuietly()
             return
         }
-        val override = ArchiveTarget.fromId(intent.getStringExtra(EXTRA_TARGET))
         val source = intent.getStringExtra(EXTRA_SOURCE) ?: "share"
         scope.launch {
             val resolved = withContext(Dispatchers.IO) { ShortLinkResolver.resolve(url) }
             if (resolved == null) {
                 Toast.makeText(applicationContext, R.string.toast_short_link_failed, Toast.LENGTH_SHORT).show()
             }
-            ShareActivity.openFromTexts(this@ShortLinkActivity, listOf(resolved ?: url), override, source, resolveShortLinks = false)
+            ShareActivity.openFromTexts(this@ShortLinkActivity, listOf(resolved ?: url), source, resolveShortLinks = false)
             finishQuietly()
         }
     }
@@ -54,13 +52,11 @@ class ShortLinkActivity : Activity() {
 
     companion object {
         private const val EXTRA_URL = "dev.unlock.extra.SHORT_URL"
-        private const val EXTRA_TARGET = "dev.unlock.extra.TARGET_ID"
         private const val EXTRA_SOURCE = "dev.unlock.extra.SOURCE"
 
-        fun createIntent(context: Context, url: String, target: ArchiveTarget?, source: String): Intent =
+        fun createIntent(context: Context, url: String, source: String): Intent =
             Intent(context, ShortLinkActivity::class.java)
                 .putExtra(EXTRA_URL, url)
-                .putExtra(EXTRA_TARGET, target?.id)
                 .putExtra(EXTRA_SOURCE, source)
     }
 }

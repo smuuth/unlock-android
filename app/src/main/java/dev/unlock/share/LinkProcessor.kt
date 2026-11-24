@@ -1,6 +1,5 @@
 package dev.unlock.share
 
-import dev.unlock.archive.ArchiveTarget
 import dev.unlock.archive.ArchiveUrls
 import dev.unlock.archive.TargetUrlBuilder
 import dev.unlock.settings.Settings
@@ -12,9 +11,8 @@ object LinkProcessor {
 
     /**
      * @param texts Kandidaten in Prioritätsreihenfolge (z. B. EXTRA_TEXT, dann EXTRA_SUBJECT).
-     * @param targetOverride z. B. aus einem Direct-Share-Shortcut; sonst gilt die Einstellung.
      */
-    fun process(texts: List<String?>, settings: Settings, targetOverride: ArchiveTarget? = null): Result? {
+    fun process(texts: List<String?>, settings: Settings): Result? {
         val extracted = texts.firstNotNullOfOrNull { UrlExtractor.extract(it) } ?: return null
         // Bereits archivierte Links (z. B. erneut aus dem Custom Tab geteilt) nicht doppelt verpacken.
         val url = ArchiveUrls.unwrap(extracted)
@@ -24,7 +22,6 @@ object LinkProcessor {
         } else {
             url
         }
-        val target = targetOverride ?: settings.target
-        return Result(extracted, cleaned, TargetUrlBuilder.build(cleaned, target, settings.domain))
+        return Result(extracted, cleaned, TargetUrlBuilder.build(cleaned, settings.target, settings.domain))
     }
 }

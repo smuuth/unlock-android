@@ -2,12 +2,13 @@
 
 Unlock ist eine schlanke, native Android-App (Kotlin + Jetpack Compose, Material 3 Expressive) zum angenehmen Lesen archivierter Webseiten auf dem Smartphone.
 
-Teilst du aus einer beliebigen App (Chrome, Reddit, Feedly, X …) einen Link mit **Unlock**, bereinigt die App die URL, ruft die archivierte Version über **archive.today** (archive.ph/.is/.today/.md/.li) oder die **Wayback Machine** ab und zeigt den Artikel direkt in einer aufgeräumten, mobilen **Leseansicht** an – wahlweise auch im Custom Tab oder Standardbrowser.
+Teilst du aus einer beliebigen App (Chrome, Reddit, Feedly, X …) einen Link mit **Unlock**, bereinigt die App die URL, ruft die archivierte Version über **archive.today** (archive.ph/.is/.today/.md/.li) oder die **Wayback Machine** ab und zeigt den Artikel direkt in einer aufgeräumten, mobilen **Leseansicht** an – wahlweise auch im In-App-Browser (Custom Tab) oder Standardbrowser.
 
 - **Integrierter Editorial-Lesemodus:** Automatische Artikel-Extraktion auch für feste Desktop-Snapshots von `archive.today`, mit 4 Farbschemata (*System*, *Hell*, *Sepia*, *Dunkel*), *Serif*/*Sans-Serif*, stufenloser Schriftgröße, Lesefortschritt und 1-Tipp-Wechsel zur Original-Ansicht
 - **Nahtloses Captcha-Handling:** Falls ein Archivdienst eine Sicherheitsabfrage oder „No results“ zeigt, öffnet sich automatisch die interaktive WebView; danach springt Unlock selbstständig in die Leseansicht
 - **Datenschutz:** Keine Werbung, kein personenbezogenes Tracking, niemals Übermittlung gelesener Links oder Artikelinhalte; optionaler Verlauf bleibt lokal. Optionale, rein anonyme Nutzungsstatistiken (TelemetryDeck, ohne SDK) lassen sich jederzeit in den Einstellungen abschalten und sind nur aktiv, wenn eine `telemetryAppId` konfiguriert ist
 - **Ultraleicht:** Release-APK ≈ **1,7 MB** (R8 + Resource-Shrinking, keine Drittanbieter-Netzwerk- oder Bild-Libraries)
+- **Einfach bedienbar:** Ein einziger Eintrag im Teilen-Menü, eine schlanke Startseite (Link einfügen, Statistik, Verlauf) und wenige verständliche Einstellungen – Archivdienst, Domain und Browser-Details liegen eingeklappt unter *Erweitert*
 - **Modernes Android:** Material 3 Expressive, Dynamic Color, Dark Mode, Edge-to-Edge, Predictive Back, Deutsch & Englisch (inkl. App-Sprache ab Android 13)
 
 ## Installation (APK)
@@ -62,8 +63,7 @@ app/src/main/java/dev/unlock/
 ├── share/      ShareActivity, ClipboardActivity, LinkProcessor, LinkOpener,
 │               UrlExtractor, UrlCleaner
 ├── archive/    ArchiveTarget/ArchiveDomain, TargetUrlBuilder, ArchiveUrls
-├── settings/   Settings, SettingsRepository (DataStore), SettingsViewModel, ui/
-├── shortcuts/  ShortcutPublisher
+├── settings/   Settings, SettingsRepository (DataStore), SettingsViewModel, SettingsActivity, ui/ (Home, Einstellungen)
 └── ui/theme/   Theme (MaterialExpressiveTheme, Dynamic Color + Fallback)
 app/src/test/   UrlExtractor-, UrlCleaner-, TargetUrlBuilder-, ArchiveUrls-,
                 LinkProcessor-, ArticleParser- & ShareActivity-Tests
