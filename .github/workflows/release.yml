@@ -11,6 +11,9 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      # `secrets` ist in Step-`if:` nicht erlaubt (macht die ganze Datei ungültig) – daher über env prüfen.
+      UNLOCK_KEYSTORE_BASE64: ${{ secrets.UNLOCK_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,9 +25,9 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Decode release keystore
-        if: ${{ secrets.UNLOCK_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.UNLOCK_KEYSTORE_BASE64 != '' }}
         run: |
-          echo "${{ secrets.UNLOCK_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/unlock-release.jks"
+          echo "$UNLOCK_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/unlock-release.jks"
           echo "UNLOCK_KEYSTORE_PATH=$RUNNER_TEMP/unlock-release.jks" >> "$GITHUB_ENV"
 
       - name: Run tests & build signed release APK
