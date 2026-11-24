@@ -11,7 +11,24 @@ data class Article(
     val sourceUrl: String,
     val archiveUrl: String,
     val blocks: List<ArticleBlock>,
-)
+) {
+    /** Ungefähre Wortzahl des extrahierten Texts (für die lokale Statistik). */
+    fun wordCount(): Int = blocks.sumOf { block ->
+        when (block) {
+            is ArticleBlock.Paragraph -> block.spans.sumOf { words(it.text) }
+            is ArticleBlock.Heading -> words(block.text)
+            is ArticleBlock.Quote -> words(block.text)
+            is ArticleBlock.BulletList -> block.items.sumOf(::words)
+            is ArticleBlock.Image -> 0
+        }
+    }
+
+    private fun words(text: String): Int = text.split(WHITESPACE).count { it.isNotBlank() }
+
+    private companion object {
+        val WHITESPACE = Regex("\\s+")
+    }
+}
 
 sealed interface ArticleBlock {
     data class Paragraph(val spans: List<InlineSpan>) : ArticleBlock

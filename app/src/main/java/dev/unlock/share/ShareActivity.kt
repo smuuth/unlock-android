@@ -8,6 +8,9 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.pm.ShortcutManagerCompat.EXTRA_SHORTCUT_ID
 import dev.unlock.R
 import dev.unlock.shortcuts.ShortcutPublisher
+import dev.unlock.archive.ArchiveUrls
+import dev.unlock.stats.StatsMath
+import dev.unlock.stats.UnlockEvent
 import dev.unlock.unlockApp
 import kotlinx.coroutines.launch
 
@@ -81,6 +84,16 @@ class ShareActivity : Activity() {
                     "source" to source,
                 ),
             )
+            app.appScope.launch {
+                app.statsRepository.record(
+                    UnlockEvent(
+                        source = source,
+                        service = effectiveTarget.service.name.lowercase(),
+                        host = result.cleanedUrl.takeUnless(ArchiveUrls::isArchiveUrl)?.let(StatsMath::hostOf),
+                        trackersRemoved = StatsMath.removedParams(result.originalUrl, result.cleanedUrl),
+                    ),
+                )
+            }
             if (settings.historyEnabled) {
                 app.appScope.launch { app.settingsRepository.addToHistory(result.cleanedUrl) }
             }

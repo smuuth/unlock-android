@@ -8,12 +8,17 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.unlock.UnlockApp
 import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveTarget
+import dev.unlock.stats.StatsRepository
+import dev.unlock.stats.UnlockStats
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
+class SettingsViewModel(
+    private val repo: SettingsRepository,
+    statsRepository: StatsRepository,
+) : ViewModel() {
 
     /** `null` solange DataStore noch nicht gelesen wurde (→ LoadingIndicator). */
     val settings: StateFlow<Settings?> =
@@ -21,6 +26,10 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     val history: StateFlow<List<HistoryEntry>> =
         repo.history.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Für die Statistik-Vorschau auf der Startseite. */
+    val stats: StateFlow<UnlockStats?> =
+        statsRepository.stats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun setTarget(value: ArchiveTarget) = update { repo.setTarget(value) }
     fun setDomain(value: ArchiveDomain) = update { repo.setDomain(value) }
@@ -37,7 +46,10 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     companion object {
         val Factory = viewModelFactory {
-            initializer { SettingsViewModel((this[APPLICATION_KEY] as UnlockApp).settingsRepository) }
+            initializer {
+                val app = this[APPLICATION_KEY] as UnlockApp
+                SettingsViewModel(app.settingsRepository, app.statsRepository)
+            }
         }
     }
 }
