@@ -8,14 +8,46 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      # `secrets` ist in Step-`if:` nicht erlaubt (macht die ganze Datei ungültig) – daher über env prüfen.
-      UNLOCK_KEYSTORE_BASE64: ${{ secrets.UNLOCK_KEYSTORE_BASE64 }}
+      # SHA-256 des Release-Zertifikats (CN=Unlock). Updates lassen sich nur mit genau diesem Schlüssel
+      # über die installierte App installieren – alles andere darf nie veröffentlicht werden.
+      EXPECTED_CERT_SHA256: 92e6ae969b904b69e23ef7a53be374f3129e499dbf1f60ea56b03ac72f7cadee
+      # Fester Asset-Name: Die App sucht danach, und …/releases/latest/download/Unlock.apk bleibt stabil.
+      APK_ASSET_NAME: Unlock.apk
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        env:
+          UNLOCK_KEYSTORE_BASE64: ${{ secrets.UNLOCK_KEYSTORE_BASE64 }}
+          UNLOCK_KEYSTORE_PASSWORD: ${{ secrets.UNLOCK_KEYSTORE_PASSWORD }}
+          UNLOCK_KEY_ALIAS: ${{ secrets.UNLOCK_KEY_ALIAS }}
+          UNLOCK_KEY_PASSWORD: ${{ secrets.UNLOCK_KEY_PASSWORD }}
+          UNLOCK_TELEMETRY_APP_ID: ${{ secrets.UNLOCK_TELEMETRY_APP_ID }}
+        run: |
+          missing=0
+          for name in UNLOCK_KEYSTORE_BASE64 UNLOCK_KEYSTORE_PASSWORD UNLOCK_KEY_ALIAS UNLOCK_KEY_PASSWORD UNLOCK_TELEMETRY_APP_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name fehlt – Release abgebrochen."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Check tag matches versionName
+        run: |
+          version_name=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts)
+          if [ "v${version_name}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} passt nicht zu versionName ${version_name} in app/build.gradle.kts."
+            exit 1
+          fi
 
       - uses: actions/setup-java@v4
         with:
@@ -25,24 +57,46 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Decode release keystore
-        if: ${{ env.UNLOCK_KEYSTORE_BASE64 != '' }}
+        env:
+          UNLOCK_KEYSTORE_BASE64: ${{ secrets.UNLOCK_KEYSTORE_BASE64 }}
         run: |
           echo "$UNLOCK_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/unlock-release.jks"
           echo "UNLOCK_KEYSTORE_PATH=$RUNNER_TEMP/unlock-release.jks" >> "$GITHUB_ENV"
 
       - name: Run tests & build signed release APK
         env:
+          UNLOCK_REQUIRE_RELEASE_SIGNING: "true"
           UNLOCK_KEYSTORE_PASSWORD: ${{ secrets.UNLOCK_KEYSTORE_PASSWORD }}
           UNLOCK_KEY_ALIAS: ${{ secrets.UNLOCK_KEY_ALIAS }}
           UNLOCK_KEY_PASSWORD: ${{ secrets.UNLOCK_KEY_PASSWORD }}
           UNLOCK_TELEMETRY_APP_ID: ${{ secrets.UNLOCK_TELEMETRY_APP_ID }}
         run: ./gradlew testDebugUnitTest assembleRelease
 
-      - name: Rename release APK
-        run: cp app/build/outputs/apk/release/app-release.apk "Unlock-${GITHUB_REF_NAME}.apk"
+      - name: Verify release signature
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs "$apk" | tee "$RUNNER_TEMP/certs.txt"
+          # Format variiert je build-tools-Version („Signer #1 certificate …“ / „V2 Signer: certificate …“):
+          # Alle gefundenen SHA-256-Digests müssen genau dem erwarteten entsprechen.
+          actual=$(grep -oE 'certificate SHA-256 digest: [0-9a-f]{64}' "$RUNNER_TEMP/certs.txt" | awk '{print $NF}' | sort -u | paste -sd, -)
+          if [ "$actual" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::APK ist mit dem falschen Schlüssel signiert (SHA-256: ${actual:-unbekannt})."
+            exit 1
+          fi
+          cp "$apk" "$APK_ASSET_NAME"
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/unlock-release.jks"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Unlock ${{ github.ref_name }}
           generate_release_notes: true
-          files: Unlock-${{ github.ref_name }}.apk
+          # Tags mit Bindestrich (z. B. v1.3.0-beta.1) werden Vorabversionen – die App bietet sie nicht an.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true
+          files: ${{ env.APK_ASSET_NAME }}

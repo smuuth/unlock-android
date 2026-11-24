@@ -31,6 +31,14 @@ val hasReleaseSigning = releaseStoreFile?.isFile == true &&
     releaseKeyAlias != null &&
     releaseKeyPassword != null
 
+// Im Release-Workflow gesetzt: lieber abbrechen, als eine mit dem Debug-Key signierte APK zu veröffentlichen
+// (die ließe sich nicht über die installierte App aktualisieren).
+if (System.getenv("UNLOCK_REQUIRE_RELEASE_SIGNING") == "true" && !hasReleaseSigning) {
+    throw GradleException(
+        "Release-Signing fehlt: UNLOCK_KEYSTORE_PATH, UNLOCK_KEYSTORE_PASSWORD, UNLOCK_KEY_ALIAS und UNLOCK_KEY_PASSWORD setzen.",
+    )
+}
+
 android {
     namespace = "dev.unlock"
     compileSdk {
@@ -41,8 +49,8 @@ android {
         applicationId = "dev.unlock"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         buildConfigField("String", "TELEMETRY_APP_ID", "\"${telemetryAppId.replace("\"", "")}\"")
     }
 
