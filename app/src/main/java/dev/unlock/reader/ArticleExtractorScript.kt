@@ -277,6 +277,21 @@ object ArticleExtractorScript {
       if (tt.length >= 4 && tt.length <= 80) publishedDate = tt;
     }
 
+    // Sprache des Artikels (für die Silbentrennung in der Leseansicht).
+    // archive.today übernimmt das lang-Attribut nicht immer, daher mehrere Quellen.
+    var language = null;
+    var langEl = bestNode.closest && bestNode.closest('[lang]');
+    var langCandidates = [
+      langEl && langEl.getAttribute('lang'),
+      document.documentElement.getAttribute('lang'),
+      (document.querySelector('meta[http-equiv="content-language" i]') || {}).content,
+      (document.querySelector('meta[property="og:locale"]') || {}).content
+    ];
+    for (var li = 0; li < langCandidates.length; li++) {
+      var lc = cleanSpace(langCandidates[li]).replace(/_/g, '-');
+      if (/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(lc)) { language = lc; break; }
+    }
+
     // 7. Inline-Formatierung (Fett, Kursiv, Links) extrahieren
     function extractSpans(node, state, out) {
       if (!node) return;
@@ -497,6 +512,7 @@ object ArticleExtractorScript {
         title: title || titleText,
         byline: byline,
         publishedDate: publishedDate,
+        language: language,
         readingTimeMinutes: Math.max(1, Math.round(wordCount / 220)),
         blocks: blocks
       }

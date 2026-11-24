@@ -30,6 +30,8 @@ data class Settings(
     val readerTheme: ReaderTheme = ReaderTheme.DEFAULT,
     val readerFont: ReaderFont = ReaderFont.DEFAULT,
     val readerFontScale: Float = 1.05f,
+    /** Blocksatz statt Flattersatz in der Leseansicht (Silbentrennung ist immer aktiv). */
+    val readerJustify: Boolean = false,
     /** Wurde schon einmal ein Link geöffnet? Danach zeigt die Startseite keine Anleitung mehr. */
     val hasUnlocked: Boolean = false,
 )
