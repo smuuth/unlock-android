@@ -82,7 +82,13 @@
             android:taskAffinity="dev.unlock.share"
             android:theme="@style/Theme.Unlock.Invisible" />
 
-        <!-- Lokale Statistik (Unterseite der Einstellungen). -->
+        <!-- Einstellungen (Unterseite der Startseite). -->
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Lokale Statistik (Unterseite der Startseite). -->
         <activity
             android:name=".stats.StatsActivity"
             android:exported="false"

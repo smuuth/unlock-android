@@ -334,16 +334,9 @@ fun ReaderScreen(
                                     },
                                 )
                                 HorizontalDivider()
+                                // Archiv-Link teilen: so können auch Empfänger ohne Unlock den Artikel lesen.
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.reader_menu_share_original)) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.ic_share), null) },
-                                    onClick = {
-                                        showOverflowMenu = false
-                                        onShareUrl(originalUrl)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.reader_menu_share_archive)) },
+                                    text = { Text(stringResource(R.string.reader_share)) },
                                     leadingIcon = { Icon(painterResource(R.drawable.ic_share), null) },
                                     onClick = {
                                         showOverflowMenu = false
@@ -503,7 +496,7 @@ fun ReaderScreen(
                     onOpenLink = onOpenInBrowser,
                     onShowOriginal = { forceWebView = true },
                     onSwitchWayback = ::switchToWayback,
-                    onShareOriginal = { onShareUrl(originalUrl) },
+                    onShare = { onShareUrl(currentArchiveUrl) },
                 )
             }
         }
@@ -673,7 +666,7 @@ private fun ArticleReaderContent(
     onOpenLink: (String) -> Unit,
     onShowOriginal: () -> Unit,
     onSwitchWayback: () -> Unit,
-    onShareOriginal: () -> Unit,
+    onShare: () -> Unit,
 ) {
     val bodySize = (18f * fontScale).sp
     val bodyLineHeight = (18f * fontScale * 1.62f).sp
@@ -904,7 +897,7 @@ private fun ArticleReaderContent(
                                     OutlinedButton(onClick = onSwitchWayback) {
                                         Text(stringResource(R.string.shortcut_wayback))
                                     }
-                                    OutlinedButton(onClick = onShareOriginal) {
+                                    OutlinedButton(onClick = onShare) {
                                         Text(stringResource(R.string.reader_share))
                                     }
                                 }

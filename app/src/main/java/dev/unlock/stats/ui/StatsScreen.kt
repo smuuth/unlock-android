@@ -97,6 +97,7 @@ fun StatsScreen(
     val today = remember { LocalDate.now() }
     val locale = LocalConfiguration.current.locales[0]
     var confirmReset by remember { mutableStateOf(false) }
+    var showMore by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -146,11 +147,21 @@ fun StatsScreen(
                     item(key = "money") { MoneyCard(current, locale, viewModel::setArticlePrice) }
                     item(key = "tiles") { TileGrid(current, today, locale) }
                     item(key = "activity") { ActivityCard(current, today, locale) }
-                    item(key = "daytime") { DaytimeCard(current, locale) }
-                    item(key = "calendar") { CalendarCard(current, today) }
-                    item(key = "weekdays") { WeekdayCard(current, locale) }
-                    item(key = "how") { HowCard(current) }
-                    if (current.hosts.isNotEmpty()) item(key = "sites") { TopSitesCard(current) }
+                    // Details für Neugierige – standardmäßig eingeklappt, damit die Seite übersichtlich bleibt.
+                    if (showMore) {
+                        item(key = "daytime") { DaytimeCard(current, locale) }
+                        item(key = "calendar") { CalendarCard(current, today) }
+                        item(key = "weekdays") { WeekdayCard(current, locale) }
+                        item(key = "how") { HowCard(current) }
+                        if (current.hosts.isNotEmpty()) item(key = "sites") { TopSitesCard(current) }
+                    }
+                    item(key = "more") {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            TextButton(onClick = { showMore = !showMore }) {
+                                Text(stringResource(if (showMore) R.string.stats_show_less else R.string.stats_show_more))
+                            }
+                        }
+                    }
                 }
             }
             item(key = "footer") {

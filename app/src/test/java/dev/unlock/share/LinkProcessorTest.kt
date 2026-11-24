@@ -29,7 +29,7 @@ class LinkProcessorTest {
         )
         assertEquals(
             "https://web.archive.org/web/https://e.com/?utm_source=x",
-            LinkProcessor.process(listOf("https://e.com/?utm_source=x"), s, ArchiveTarget.WAYBACK)!!.targetUrl,
+            LinkProcessor.process(listOf("https://e.com/?utm_source=x"), s.copy(target = ArchiveTarget.WAYBACK))!!.targetUrl,
         )
     }
 

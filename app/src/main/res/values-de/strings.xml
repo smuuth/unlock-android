@@ -5,10 +5,6 @@
     <string name="toast_no_link">Kein Link gefunden</string>
     <string name="toast_no_browser">Kein Browser zum Öffnen des Links gefunden</string>
     <string name="toast_short_link_failed">Google-Kurzlink konnte nicht aufgelöst werden</string>
-
-    <string name="shortcut_newest">%1$s – neueste</string>
-    <string name="shortcut_submit">%1$s – neu archivieren</string>
-    <string name="shortcut_all">%1$s – alle Snapshots</string>
     <string name="shortcut_wayback">Wayback Machine</string>
     <string name="shortcut_clipboard_short">Kopierten Link öffnen</string>
     <string name="shortcut_clipboard_long">Link aus Zwischenablage öffnen</string>
@@ -19,13 +15,10 @@
     <string name="how_step_pick">„Unlock“ wählen</string>
     <string name="how_step_read">Archivierte Version lesen</string>
     <string name="how_hint">Tipp: Du kannst auch einen Link markieren und im Textmenü „Unlock“ wählen.</string>
-
-    <string name="test_title">Ausprobieren</string>
-    <string name="test_field_label">Link oder Text einfügen</string>
+    <string name="test_field_label">Link einfügen</string>
     <string name="test_paste">Aus Zwischenablage einfügen</string>
     <string name="test_clear">Leeren</string>
     <string name="test_open">Öffnen</string>
-    <string name="test_preview">Öffnet: %1$s</string>
     <string name="test_no_link">In diesem Text steckt kein Link</string>
 
     <string name="section_service">Archivdienst</string>
@@ -39,23 +32,14 @@
     <string name="wayback_desc">Öffnet die neueste Aufnahme der Seite im Internet Archive.</string>
     <string name="domain_title">archive.today-Domain</string>
     <string name="domain_desc">Wechseln, falls eine Domain gerade nicht erreichbar ist.</string>
-
-    <string name="section_behavior">Verhalten</string>
     <string name="setting_clean">Links bereinigen</string>
     <string name="setting_clean_desc">Tracking-Parameter entfernen und Weiterleitungen auflösen</string>
     <string name="setting_amp">Desktop-Seiten bevorzugen</string>
     <string name="setting_amp_desc">AMP- und Mobil-Links (amp., m.) in normale Seiten umwandeln</string>
-    <string name="setting_open_mode">Artikel öffnen in</string>
-    <string name="open_mode_reader">Lesemodus</string>
-    <string name="open_mode_custom_tab">Custom Tab</string>
-    <string name="open_mode_browser">Browser</string>
-    <string name="open_mode_reader_desc">Klare mobile Leseansicht mit Typografie &amp; Themes. Captchas erscheinen automatisch direkt in der App.</string>
-    <string name="open_mode_custom_tab_desc">Öffnet die archivierte Seite in einem Browser-Custom-Tab.</string>
-    <string name="open_mode_browser_desc">Übergibt den Link direkt an deinen Standardbrowser.</string>
     <string name="setting_history">Verlauf speichern</string>
     <string name="setting_history_desc">Merkt sich die letzten 20 Links, nur auf diesem Gerät</string>
-    <string name="setting_analytics">Anonyme Nutzungsstatistik</string>
-    <string name="setting_analytics_desc">Zählt rein anonym, welche Funktionen genutzt werden – niemals gelesene Links oder Inhalte</string>
+    <string name="setting_analytics">Anonyme Nutzungsdaten teilen</string>
+    <string name="setting_analytics_desc">Hilft, Unlock zu verbessern – niemals gelesene Links oder Inhalte</string>
 
     <string name="reader_back">Zurück</string>
     <string name="reader_appearance">Darstellung</string>
@@ -69,8 +53,6 @@
     <string name="reader_menu_wayback">Mit Wayback öffnen</string>
     <string name="reader_menu_other_domain">Mit %1$s versuchen</string>
     <string name="reader_menu_rearchive">Neu archivieren</string>
-    <string name="reader_menu_share_original">Original-Link teilen</string>
-    <string name="reader_menu_share_archive">Archiv-Link teilen</string>
     <string name="reader_menu_open_browser">Im Browser öffnen</string>
     <string name="reader_banner_captcha">Sicherheitsabfrage kurz lösen – danach öffnet sich automatisch der Lesemodus.</string>
     <string name="reader_banner_no_results">Noch kein Snapshot vorhanden. Du kannst den Artikel jetzt archivieren oder die Wayback Machine versuchen.</string>
@@ -97,11 +79,10 @@
 
     <string name="section_about">Info</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_privacy">Unlock sammelt keine persönlichen Daten, keine Werbung und sendet niemals gelesene Links oder Artikelinhalte. Optionale anonyme Nutzungsstatistiken (TelemetryDeck) lassen sich oben jederzeit abschalten.</string>
+    <string name="about_privacy">Unlock sammelt keine persönlichen Daten, zeigt keine Werbung und sendet niemals gelesene Links oder Artikelinhalte. Anonyme Nutzungsdaten (TelemetryDeck) lassen sich unter „Datenschutz“ jederzeit abschalten.</string>
     <string name="about_archive">archive.today und die Wayback Machine sind unabhängige Fremdangebote. Sie können Captchas zeigen, ihre Domain wechseln oder zeitweise nicht erreichbar sein.</string>
     <!-- Statistik -->
     <string name="stats_title">Statistik</string>
-    <string name="stats_open">Statistik öffnen</string>
     <string name="stats_teaser_title">Deine Statistik</string>
     <string name="stats_teaser_body">%1$d entsperrt · %2$s gespart</string>
     <string name="stats_teaser_empty">Dein erster entsperrter Artikel startet die Statistik.</string>
@@ -149,7 +130,7 @@
     <string name="source_share">Teilen-Menü</string>
     <string name="source_process_text">Textauswahl</string>
     <string name="source_clipboard">Zwischenablage</string>
-    <string name="source_test">Testfeld</string>
+    <string name="source_test">In der App eingefügt</string>
     <string name="source_history">Verlauf</string>
     <string name="source_other">Sonstige</string>
     <string name="stats_privacy">Deine Statistik bleibt auf diesem Gerät. Gespeichert werden nur Zähler und Website-Namen – nie vollständige Links – und sie landet nicht im Backup.</string>
@@ -162,4 +143,20 @@
     <string name="stats_cancel">Abbrechen</string>
     <string name="stats_disabled_title">Statistik ist aus</string>
     <string name="stats_disabled_body">Schalte sie unten ein, um zu sehen, wie viel du entsperrst. Alles bleibt auf diesem Gerät.</string>
+    <!-- Startseite & Einstellungen -->
+    <string name="home_title">Artikel öffnen</string>
+    <string name="home_body">Teile einen Link aus einer beliebigen App mit „Unlock“ – oder füge ihn hier ein.</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="section_reading">Lesen</string>
+    <string name="setting_reader">Lesemodus verwenden</string>
+    <string name="setting_reader_desc">Öffnet Artikel in einer klaren, gut lesbaren Ansicht. Aus: Artikel öffnen sich im Browser.</string>
+    <string name="section_privacy">Datenschutz</string>
+    <string name="setting_stats">Statistik auf diesem Gerät</string>
+    <string name="setting_stats_desc">Zeigt, wie viel du entsperrst. Ausschalten löscht alle Zähler.</string>
+    <string name="section_advanced">Erweitert</string>
+    <string name="advanced_desc">Archivdienst, Domain, Browser</string>
+    <string name="setting_browser">Im Standardbrowser öffnen</string>
+    <string name="setting_browser_desc">Statt im In-App-Browser. Gilt nur, wenn der Lesemodus aus ist.</string>
+    <string name="stats_show_more">Mehr anzeigen</string>
+    <string name="stats_show_less">Weniger anzeigen</string>
 </resources>

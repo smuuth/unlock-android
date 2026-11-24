@@ -54,6 +54,7 @@ class SettingsRepository(context: Context) {
     suspend fun setCleanUrls(value: Boolean) = store.edit { it[Keys.CLEAN] = value }
     suspend fun setNormalizeAmp(value: Boolean) = store.edit { it[Keys.AMP] = value }
     suspend fun setOpenMode(mode: OpenMode) = store.edit { it[Keys.OPEN_MODE] = mode.id }
+    suspend fun markUnlocked() = store.edit { it[Keys.HAS_UNLOCKED] = true }
     suspend fun setReaderTheme(theme: ReaderTheme) = store.edit { it[Keys.READER_THEME] = theme.id }
     suspend fun setReaderFont(font: ReaderFont) = store.edit { it[Keys.READER_FONT] = font.id }
     suspend fun setReaderFontScale(scale: Float) = store.edit {
@@ -110,6 +111,7 @@ class SettingsRepository(context: Context) {
             readerTheme = ReaderTheme.fromId(this[Keys.READER_THEME]),
             readerFont = ReaderFont.fromId(this[Keys.READER_FONT]),
             readerFontScale = (this[Keys.READER_FONT_SCALE] ?: 1.05f).coerceIn(0.85f, 1.45f),
+            hasUnlocked = this[Keys.HAS_UNLOCKED] ?: false,
         )
     }
 
@@ -127,6 +129,7 @@ class SettingsRepository(context: Context) {
         val HISTORY = stringPreferencesKey("history")
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
         val ANALYTICS_CLIENT_ID = stringPreferencesKey("analytics_client_id")
+        val HAS_UNLOCKED = booleanPreferencesKey("has_unlocked")
     }
 
     companion object {

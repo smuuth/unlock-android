@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val repo: SettingsRepository,
-    statsRepository: StatsRepository,
+    private val statsRepository: StatsRepository,
 ) : ViewModel() {
 
     /** `null` solange DataStore noch nicht gelesen wurde (→ LoadingIndicator). */
@@ -38,6 +38,7 @@ class SettingsViewModel(
     fun setOpenMode(value: OpenMode) = update { repo.setOpenMode(value) }
     fun setHistoryEnabled(value: Boolean) = update { repo.setHistoryEnabled(value) }
     fun setAnalyticsEnabled(value: Boolean) = update { repo.setAnalyticsEnabled(value) }
+    fun setStatsEnabled(value: Boolean) = update { statsRepository.setEnabled(value) }
     fun clearHistory() = update { repo.clearHistory() }
 
     private fun update(block: suspend () -> Unit) {

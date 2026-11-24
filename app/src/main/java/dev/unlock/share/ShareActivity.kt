@@ -4,10 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.content.pm.ShortcutManagerCompat.EXTRA_SHORTCUT_ID
 import dev.unlock.R
-import dev.unlock.shortcuts.ShortcutPublisher
 import dev.unlock.archive.ArchiveUrls
 import dev.unlock.stats.StatsMath
 import dev.unlock.stats.UnlockEvent
@@ -30,10 +27,8 @@ class ShareActivity : Activity() {
 
     private fun handle(intent: Intent?) {
         val texts = extractTexts(intent ?: return)
-        val override = ShortcutPublisher.targetForShortcut(intent.getStringExtra(EXTRA_SHORTCUT_ID))
         val source = if (intent.action == Intent.ACTION_PROCESS_TEXT) "process_text" else "share"
-        openFromTexts(this, texts, override, source)
-        intent.getStringExtra(EXTRA_SHORTCUT_ID)?.let { ShortcutManagerCompat.reportShortcutUsed(this, it) }
+        openFromTexts(this, texts, source)
     }
 
     companion object {
@@ -50,7 +45,6 @@ class ShareActivity : Activity() {
         fun openFromTexts(
             activity: Activity,
             texts: List<String?>,
-            targetOverride: dev.unlock.archive.ArchiveTarget? = null,
             source: String = "share",
             resolveShortLinks: Boolean = true,
         ): Boolean {
@@ -59,13 +53,13 @@ class ShareActivity : Activity() {
                 val shortLink = texts.firstNotNullOfOrNull { UrlExtractor.extract(it) }
                     ?.takeIf { ShortLinkResolver.isShortLink(it) }
                 if (shortLink != null) {
-                    activity.startActivity(ShortLinkActivity.createIntent(activity, shortLink, targetOverride, source))
+                    activity.startActivity(ShortLinkActivity.createIntent(activity, shortLink, source))
                     return true
                 }
             }
             val app = activity.unlockApp
             val settings = app.settingsRepository.current()
-            val result = LinkProcessor.process(texts, settings, targetOverride)
+            val result = LinkProcessor.process(texts, settings)
             if (result == null) {
                 Toast.makeText(activity.applicationContext, R.string.toast_no_link, Toast.LENGTH_SHORT).show()
                 return false
@@ -74,7 +68,11 @@ class ShareActivity : Activity() {
                 Toast.makeText(activity.applicationContext, R.string.toast_no_browser, Toast.LENGTH_SHORT).show()
                 return false
             }
-            val effectiveTarget = targetOverride ?: settings.target
+            val effectiveTarget = settings.target
+            if (!settings.hasUnlocked) {
+                // Einmalig merken: danach blendet die Startseite die Schritt-für-Schritt-Anleitung aus.
+                app.appScope.launch { app.settingsRepository.markUnlocked() }
+            }
             app.telemetry.track(
                 "Unlock.Article.opened",
                 mapOf(
