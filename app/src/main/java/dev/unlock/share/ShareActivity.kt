@@ -49,7 +49,17 @@ class ShareActivity : Activity() {
             texts: List<String?>,
             targetOverride: dev.unlock.archive.ArchiveTarget? = null,
             source: String = "share",
+            resolveShortLinks: Boolean = true,
         ): Boolean {
+            if (resolveShortLinks) {
+                // Google-Kurzlinks (Discover/Google-App) erst im Hintergrund auflösen.
+                val shortLink = texts.firstNotNullOfOrNull { UrlExtractor.extract(it) }
+                    ?.takeIf { ShortLinkResolver.isShortLink(it) }
+                if (shortLink != null) {
+                    activity.startActivity(ShortLinkActivity.createIntent(activity, shortLink, targetOverride, source))
+                    return true
+                }
+            }
             val app = activity.unlockApp
             val settings = app.settingsRepository.current()
             val result = LinkProcessor.process(texts, settings, targetOverride)

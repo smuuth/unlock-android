@@ -5,6 +5,7 @@
 
     <string name="toast_no_link">No link found</string>
     <string name="toast_no_browser">No browser available to open the link</string>
+    <string name="toast_short_link_failed">Could not resolve the Google short link</string>
 
     <string name="shortcut_newest">%1$s – newest</string>
     <string name="shortcut_submit">%1$s – archive now</string>
