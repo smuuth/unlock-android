@@ -10,8 +10,8 @@ class UrlExtractorTest {
         assertEquals("https://example.com/a", UrlExtractor.extract("https://example.com/a"))
 
     @Test fun titleAndUrl() = assertEquals(
-        "https://www.nytimes.com/2026/11/22/world/story.html",
-        UrlExtractor.extract("Große Geschichte – hier lesen https://www.nytimes.com/2026/11/22/world/story.html"),
+        "https://www.news.example.com/2026/11/22/world/story.html",
+        UrlExtractor.extract("Große Geschichte – hier lesen https://www.news.example.com/2026/11/22/world/story.html"),
     )
 
     @Test fun urlFollowedByText() = assertEquals(

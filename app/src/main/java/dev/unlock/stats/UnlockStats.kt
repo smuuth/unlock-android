@@ -26,11 +26,8 @@ data class UnlockStats(
     val readerArticles: Int = 0,
     val readerWords: Long = 0,
     val readerMinutes: Int = 0,
-    val articlePriceCents: Int = DEFAULT_PRICE_CENTS,
 ) {
     val isEmpty: Boolean get() = total == 0
-
-    val savedCents: Long get() = total.toLong() * articlePriceCents
 
     fun countOn(day: LocalDate): Int = daily[day.toEpochDay()] ?: 0
 
@@ -61,7 +58,7 @@ data class UnlockStats(
         return daily.entries.sumOf { (day, count) -> if (day in monday.toEpochDay()..today.toEpochDay()) count else 0 }
     }
 
-    /** Aufeinanderfolgende Tage mit mindestens einer Entsperrung – heute zählt, gestern hält die Serie noch am Leben. */
+    /** Aufeinanderfolgende Tage mit mindestens einem geöffneten Artikel – heute zählt, gestern hält die Serie noch am Leben. */
     fun currentStreak(today: LocalDate): Int {
         var day = if (countOn(today) > 0) today else today.minusDays(1)
         var streak = 0
@@ -87,7 +84,7 @@ data class UnlockStats(
     fun bestDay(): Pair<LocalDate, Int>? =
         daily.maxByOrNull { it.value }?.takeIf { it.value > 0 }?.let { LocalDate.ofEpochDay(it.key) to it.value }
 
-    /** Stunde mit den meisten Entsperrungen oder `null`, wenn noch nichts erfasst wurde. */
+    /** Stunde mit den meisten geöffneten Artikeln oder `null`, wenn noch nichts erfasst wurde. */
     fun peakHour(): Int? = hourly.indices.maxByOrNull { hourly[it] }?.takeIf { hourly[it] > 0 }
 
     fun topHosts(limit: Int): List<Pair<String, Int>> =
@@ -95,9 +92,6 @@ data class UnlockStats(
             .take(limit).map { it.key to it.value }
 
     companion object {
-        const val DEFAULT_PRICE_CENTS = 99
-        val PRICE_OPTIONS = listOf(49, 99, 199, 299)
-
         /** Durchschnittlicher Roman ≈ 90 000 Wörter. */
         const val WORDS_PER_NOVEL = 90_000
     }

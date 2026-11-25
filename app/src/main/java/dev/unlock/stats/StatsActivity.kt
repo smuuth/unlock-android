@@ -50,7 +50,6 @@ class StatsViewModel(private val repo: StatsRepository) : ViewModel() {
         repo.stats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun setEnabled(value: Boolean) = launch { repo.setEnabled(value) }
-    fun setArticlePrice(cents: Int) = launch { repo.setArticlePrice(cents) }
     fun reset() = launch { repo.reset() }
     fun seedDemo() = launch { repo.seedDemo() }
 

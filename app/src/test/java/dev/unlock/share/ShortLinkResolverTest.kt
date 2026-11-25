@@ -8,7 +8,7 @@ import org.junit.Test
 
 class ShortLinkResolverTest {
 
-    private val article = "https://www.echo-online.de/lokales/darmstadt/pamo-viertel-6870389"
+    private val article = "https://www.example.org/articles/sample-story-6870389"
 
     @Test fun detectsGoogleShortLinks() {
         assertTrue(ShortLinkResolver.isShortLink("https://share.google/2WOs2ZxdTitqZS55J"))

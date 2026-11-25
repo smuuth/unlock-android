@@ -80,7 +80,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
-import java.util.Currency
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -144,7 +143,6 @@ fun StatsScreen(
                 }
                 else -> {
                     item(key = "hero") { HeroCard(current, today, locale) }
-                    item(key = "money") { MoneyCard(current, locale, viewModel::setArticlePrice) }
                     item(key = "tiles") { TileGrid(current, today, locale) }
                     item(key = "activity") { ActivityCard(current, today, locale) }
                     // Details für Neugierige – standardmäßig eingeklappt, damit die Seite übersichtlich bleibt.
@@ -269,41 +267,6 @@ private fun HeroChip(text: String, emphasized: Boolean) {
         contentColor = if (emphasized) colors.onPrimary else colors.onPrimaryContainer,
     ) {
         Text(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp))
-    }
-}
-
-// ---------------------------------------------------------------- Geld
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun MoneyCard(stats: UnlockStats, locale: Locale, onPriceChange: (Int) -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val saved = animatedInt(stats.savedCents.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
-    Surface(color = colors.tertiaryContainer, contentColor = colors.onTertiaryContainer, shape = CardShape) {
-        Column(Modifier.fillMaxWidth().padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ShapeIcon(MaterialShapes.Sunny, R.drawable.ic_euro, colors.tertiary, colors.onTertiary, size = 56)
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text(stringResource(R.string.stats_saved_title), style = MaterialTheme.typography.titleMedium)
-                    Text(formatEuro(saved.toLong(), locale), style = MaterialTheme.typography.displayMediumEmphasized)
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                stringResource(R.string.stats_saved_body, formatEuro(stats.articlePriceCents.toLong(), locale)),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.stats_saved_price), style = MaterialTheme.typography.labelLarge)
-            Spacer(Modifier.height(8.dp))
-            val options = UnlockStats.PRICE_OPTIONS
-            ConnectedToggleRow(
-                labels = options.map { formatEuro(it.toLong(), locale) },
-                selectedIndex = options.indexOf(stats.articlePriceCents),
-                onSelect = { onPriceChange(options[it]) },
-            )
-        }
     }
 }
 
@@ -651,9 +614,6 @@ internal fun animatedInt(target: Int): Int {
     LaunchedEffect(target) { anim.animateTo(target.toFloat(), tween(1_100, easing = FastOutSlowInEasing)) }
     return anim.value.roundToInt()
 }
-
-internal fun formatEuro(cents: Long, locale: Locale): String =
-    NumberFormat.getCurrencyInstance(locale).apply { currency = Currency.getInstance("EUR") }.format(cents / 100.0)
 
 private fun formatInt(value: Long, locale: Locale): String = NumberFormat.getIntegerInstance(locale).format(value)
 

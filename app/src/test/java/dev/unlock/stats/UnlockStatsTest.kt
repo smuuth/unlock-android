@@ -9,7 +9,7 @@ class UnlockStatsTest {
 
     private val today = LocalDate.of(2026, 11, 24) // Dienstag
     private fun day(offset: Long) = today.minusDays(offset).toEpochDay()
-    private val event = UnlockEvent("share", "archive_today", "spiegel.de", 2)
+    private val event = UnlockEvent("share", "archive_today", "example.org", 2)
 
     @Test fun applyCountsEverything() {
         var s = UnlockStats()
@@ -21,9 +21,8 @@ class UnlockStatsTest {
         assertEquals(1, s.hourly[22])
         assertEquals(1, s.hourly[7])
         assertEquals(mapOf("share" to 1, "clipboard" to 1), s.sources)
-        assertEquals(mapOf("spiegel.de" to 1), s.hosts)
+        assertEquals(mapOf("example.org" to 1), s.hosts)
         assertEquals(2, s.trackersRemoved)
-        assertEquals(2 * UnlockStats.DEFAULT_PRICE_CENTS.toLong(), s.savedCents)
     }
 
     @Test fun streaks() {
@@ -57,8 +56,8 @@ class UnlockStatsTest {
     @Test fun removedParamsAndHosts() {
         assertEquals(2, StatsMath.removedParams("https://a.de/x?utm_source=1&utm_medium=2&id=3", "https://a.de/x?id=3"))
         assertEquals(0, StatsMath.removedParams("https://a.de/x", "https://a.de/x"))
-        assertEquals("spiegel.de", StatsMath.hostOf("https://www.spiegel.de/politik/a-123"))
-        assertEquals("nytimes.com", StatsMath.hostOf("https://m.nytimes.com/x"))
+        assertEquals("example.org", StatsMath.hostOf("https://www.example.org/articles/a-123"))
+        assertEquals("news.example.com", StatsMath.hostOf("https://m.news.example.com/x"))
         assertNull(StatsMath.hostOf("not a url"))
     }
 
