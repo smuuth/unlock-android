@@ -62,7 +62,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -82,7 +81,6 @@ import dev.unlock.share.ShareActivity
 import dev.unlock.stats.StatsActivity
 import dev.unlock.stats.UnlockStats
 import dev.unlock.stats.ui.PillBarChart
-import dev.unlock.stats.ui.formatEuro
 import dev.unlock.unlockApp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -272,12 +270,11 @@ private fun UnlockCard(settings: Settings, firstRun: Boolean) {
     }
 }
 
-/** Kompakte Vorschau: Gesamtzahl, gespartes Geld und eine Mini-Woche – einziger Einstieg in die Statistik. */
+/** Kompakte Vorschau: Gesamtzahl und eine Mini-Woche – einziger Einstieg in die Statistik. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun StatsTeaserCard(stats: UnlockStats, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val locale = LocalConfiguration.current.locales[0]
     val today = remember { LocalDate.now() }
     Surface(onClick = onClick, color = colors.secondaryContainer, contentColor = colors.onSecondaryContainer, shape = CardShape) {
         Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -291,7 +288,7 @@ private fun StatsTeaserCard(stats: UnlockStats, onClick: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.stats_teaser_title), style = MaterialTheme.typography.titleMediumEmphasized)
                 Text(
-                    stringResource(R.string.stats_teaser_body, stats.total, formatEuro(stats.savedCents, locale)),
+                    stringResource(R.string.stats_teaser_body, stats.total),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSecondaryContainer.copy(alpha = 0.8f),
                 )

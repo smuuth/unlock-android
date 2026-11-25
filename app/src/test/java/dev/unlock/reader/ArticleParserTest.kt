@@ -14,23 +14,23 @@ class ArticleParserTest {
 
     @Test fun detectsCaptchaFromDoubleQuotedJsString() {
         val raw = JSONObject.quote("""{"status":"captcha"}""")
-        val res = ArticleParser.parse(raw, "https://www.spiegel.de/a", "https://archive.ph/123")
+        val res = ArticleParser.parse(raw, "https://www.example.org/a", "https://archive.ph/123")
         assertEquals(ExtractionResult.NeedsInteraction(InteractionReason.CAPTCHA), res)
     }
 
     @Test fun detectsNoResults() {
-        val res = ArticleParser.parse("""{"status":"no_results"}""", "https://www.zeit.de/a", "https://archive.ph/newest/...")
+        val res = ArticleParser.parse("""{"status":"no_results"}""", "https://www.news.example.com/a", "https://archive.ph/newest/...")
         assertEquals(ExtractionResult.NeedsInteraction(InteractionReason.NO_RESULTS), res)
     }
 
     @Test fun detectsSubmitFormAndSubmitting() {
         assertEquals(
             ExtractionResult.NeedsInteraction(InteractionReason.SUBMIT_FORM),
-            ArticleParser.parse("""{"status":"submit_form"}""", "https://www.echo-online.de/a", "https://archive.ph/?url=..."),
+            ArticleParser.parse("""{"status":"submit_form"}""", "https://www.blog.example.org/a", "https://archive.ph/?url=..."),
         )
         assertEquals(
             ExtractionResult.NeedsInteraction(InteractionReason.SUBMITTING),
-            ArticleParser.parse("""{"status":"submitting"}""", "https://www.echo-online.de/a", "https://archive.ph/submit/?url=..."),
+            ArticleParser.parse("""{"status":"submitting"}""", "https://www.blog.example.org/a", "https://archive.ph/submit/?url=..."),
         )
     }
 
@@ -44,7 +44,7 @@ class ArticleParserTest {
                 "publishedDate": "23.11.2026",
                 "readingTimeMinutes": 4,
                 "blocks": [
-                  { "type": "image", "src": "https://archive.ph/img.jpg", "caption": "Foto: dpa" },
+                  { "type": "image", "src": "https://archive.ph/img.jpg", "caption": "Foto: Archiv" },
                   { "type": "heading", "level": 2, "text": "Zwischenüberschrift" },
                   {
                     "type": "paragraph",
@@ -61,14 +61,14 @@ class ArticleParserTest {
             }
         """.trimIndent()
         val raw = JSONObject.quote(json)
-        val res = ArticleParser.parse(raw, "https://www.spiegel.de/artikel", "https://archive.ph/2026/spiegel")
+        val res = ArticleParser.parse(raw, "https://www.example.org/artikel", "https://archive.ph/2026/example")
         assertTrue(res is ExtractionResult.ArticleFound)
         val article = (res as ExtractionResult.ArticleFound).article
         assertEquals("Test Headline", article.title)
-        assertEquals("spiegel.de", article.siteName)
+        assertEquals("example.org", article.siteName)
         assertEquals(4, article.readingTimeMinutes)
         assertEquals(5, article.blocks.size)
-        assertEquals(ArticleBlock.Image("https://archive.ph/img.jpg", "Foto: dpa"), article.blocks[0])
+        assertEquals(ArticleBlock.Image("https://archive.ph/img.jpg", "Foto: Archiv"), article.blocks[0])
         assertEquals(ArticleBlock.Heading(2, "Zwischenüberschrift"), article.blocks[1])
         val p = article.blocks[2] as ArticleBlock.Paragraph
         assertEquals(3, p.spans.size)
@@ -101,7 +101,7 @@ class ArticleParserTest {
 
     @Test fun readsLanguageFromExtractorResult() {
         val json = """{"status":"article","article":{"title":"Ein Titel","language":"de-AT","blocks":[{"type":"paragraph","spans":[{"text":"Hallo"}]}]}}"""
-        val res = ArticleParser.parse(json, "https://www.derstandard.at/a", "https://archive.ph/1") as ExtractionResult.ArticleFound
+        val res = ArticleParser.parse(json, "https://www.example.org/a", "https://archive.ph/1") as ExtractionResult.ArticleFound
         assertEquals("de-AT", res.article.language)
     }
 }

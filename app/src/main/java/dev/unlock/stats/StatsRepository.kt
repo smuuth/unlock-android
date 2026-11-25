@@ -50,18 +50,25 @@ class StatsRepository(context: Context) {
         prefs[Keys.ENABLED] = value
     }
 
-    suspend fun setArticlePrice(cents: Int) = store.edit { it[Keys.PRICE] = cents.coerceIn(0, 10_000) }
-
     suspend fun reset() = store.edit { it.clearCounters() }
 
     /** Nur für Debug-Builds: füllt plausible Beispieldaten für Screenshots und UI-Tests. */
     suspend fun seedDemo(today: LocalDate = LocalDate.now()) = store.edit { prefs ->
         val random = Random(42)
-        val hosts = listOf("spiegel.de", "zeit.de", "nytimes.com", "sueddeutsche.de", "faz.net", "economist.com", "handelsblatt.com", "wsj.com")
+        val hosts = listOf(
+            "example.org",
+            "news.example.com",
+            "tech.example.net",
+            "blog.example.org",
+            "archive.example.com",
+            "science.example.org",
+            "culture.example.net",
+            "docs.example.com",
+        )
         val sources = listOf("share", "share", "share", "process_text", "clipboard", "history")
         val hourWeights = intArrayOf(0, 0, 0, 0, 0, 1, 3, 6, 5, 3, 2, 2, 4, 3, 2, 2, 2, 3, 4, 5, 6, 8, 7, 3)
         val hourPool = hourWeights.flatMapIndexed { hour, w -> List(w) { hour } }
-        var stats = UnlockStats(articlePriceCents = prefs[Keys.PRICE] ?: UnlockStats.DEFAULT_PRICE_CENTS)
+        var stats = UnlockStats()
         for (offset in 150 downTo 0) {
             val day = today.minusDays(offset.toLong())
             val weekendBoost = if (day.dayOfWeek.value >= 6) 2 else 0
@@ -120,7 +127,6 @@ class StatsRepository(context: Context) {
         readerArticles = this[Keys.READER_ARTICLES] ?: 0,
         readerWords = this[Keys.READER_WORDS] ?: 0L,
         readerMinutes = this[Keys.READER_MINUTES] ?: 0,
-        articlePriceCents = this[Keys.PRICE] ?: UnlockStats.DEFAULT_PRICE_CENTS,
     )
 
     private object Keys {
@@ -136,6 +142,5 @@ class StatsRepository(context: Context) {
         val READER_ARTICLES = intPreferencesKey("reader_articles")
         val READER_WORDS = longPreferencesKey("reader_words")
         val READER_MINUTES = intPreferencesKey("reader_minutes")
-        val PRICE = intPreferencesKey("article_price_cents")
     }
 }

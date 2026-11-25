@@ -375,7 +375,7 @@ object ArticleExtractorScript {
     var seenImgs = {};
     var wordCount = 0;
 
-    var BOILERPLATE_RE = /^(spiegel bei google bevorzugen|prefer the guardian on google|add .+ as a preferred source|see more of our coverage|support the guardian|fund independent journalism|make a year-end gift|print subscriptions|newsletters|listen\s*[·•]|share|bookmark|zur merkliste|bild vergrößern|sign in|subscribe|log in|anmelden|abonnement|skip to main content|skip to navigation)$/i;
+    var BOILERPLATE_RE = /^(.{2,40} bei google bevorzugen|prefer .{2,40} on google|add .+ as a preferred source|see more of our coverage|support (independent|our) journalism|fund independent journalism|make a year-end gift|print subscriptions|newsletters|listen\s*[·•]|share|bookmark|zur merkliste|bild vergrößern|sign in|subscribe|log in|anmelden|abonnement|skip to main content|skip to navigation)$/i;
 
     function pushParagraph(el) {
       if (isInsideLink(el)) return;

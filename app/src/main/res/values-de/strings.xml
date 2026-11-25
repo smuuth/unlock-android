@@ -86,17 +86,14 @@
     <!-- Statistik -->
     <string name="stats_title">Statistik</string>
     <string name="stats_teaser_title">Deine Statistik</string>
-    <string name="stats_teaser_body">%1$d entsperrt · %2$s gespart</string>
-    <string name="stats_teaser_empty">Dein erster entsperrter Artikel startet die Statistik.</string>
-    <string name="stats_hero_label">Artikel entsperrt</string>
+    <string name="stats_teaser_body">%1$d Artikel geöffnet</string>
+    <string name="stats_teaser_empty">Dein erster geöffneter Artikel startet die Statistik.</string>
+    <string name="stats_hero_label">Artikel geöffnet</string>
     <string name="stats_since">seit %1$s</string>
     <string name="stats_today">Heute %1$d</string>
     <string name="stats_week">Diese Woche %1$d</string>
-    <string name="stats_empty_title">Noch nichts entsperrt</string>
+    <string name="stats_empty_title">Noch nichts geöffnet</string>
     <string name="stats_empty_body">Teile einen Artikel mit Unlock – deine Statistik beginnt mit dem ersten Link.</string>
-    <string name="stats_saved_title">Gespartes Geld</string>
-    <string name="stats_saved_body">Schätzung: %1$s pro entsperrtem Artikel statt Einzelkauf oder Abo.</string>
-    <string name="stats_saved_price">Preis pro Artikel</string>
     <string name="stats_streak">Tage in Folge</string>
     <string name="stats_streak_best">Rekord: %1$d Tage</string>
     <string name="stats_trackers">Tracker entfernt</string>
@@ -112,8 +109,8 @@
     <string name="stats_range_week">7 Tage</string>
     <string name="stats_range_month">30 Tage</string>
     <string name="stats_range_year">12 Monate</string>
-    <string name="stats_avg_day">%1$d Entsperrungen · Ø %2$s pro Tag</string>
-    <string name="stats_avg_month">%1$d Entsperrungen · Ø %2$s pro Monat</string>
+    <string name="stats_avg_day">%1$d Artikel · Ø %2$s pro Tag</string>
+    <string name="stats_avg_month">%1$d Artikel · Ø %2$s pro Monat</string>
     <string name="stats_daytime">Tagesverlauf</string>
     <string name="stats_peak">Am aktivsten gegen %1$s</string>
     <string name="stats_chrono_early">Frühaufsteher:in</string>
@@ -126,7 +123,7 @@
     <string name="stats_weekdays">Wochentage</string>
     <string name="stats_fav_weekday">Lieblingstag: %1$s</string>
     <string name="stats_top_sites">Top-Websites</string>
-    <string name="stats_how">So entsperrst du</string>
+    <string name="stats_how">So öffnest du Artikel</string>
     <string name="stats_services">Archive</string>
     <string name="stats_sources">Einstiege</string>
     <string name="source_share">Teilen-Menü</string>
@@ -144,7 +141,7 @@
     <string name="stats_reset_confirm">Zurücksetzen</string>
     <string name="stats_cancel">Abbrechen</string>
     <string name="stats_disabled_title">Statistik ist aus</string>
-    <string name="stats_disabled_body">Schalte sie unten ein, um zu sehen, wie viel du entsperrst. Alles bleibt auf diesem Gerät.</string>
+    <string name="stats_disabled_body">Schalte sie unten ein, um zu sehen, wie viel du liest. Alles bleibt auf diesem Gerät.</string>
     <!-- Startseite & Einstellungen -->
     <string name="home_title">Artikel öffnen</string>
     <string name="home_body">Teile einen Link aus einer beliebigen App mit „Unlock“ – oder füge ihn hier ein.</string>
@@ -154,7 +151,7 @@
     <string name="setting_reader_desc">Öffnet Artikel in einer klaren, gut lesbaren Ansicht. Aus: Artikel öffnen sich im Browser.</string>
     <string name="section_privacy">Datenschutz</string>
     <string name="setting_stats">Statistik auf diesem Gerät</string>
-    <string name="setting_stats_desc">Zeigt, wie viel du entsperrst. Ausschalten löscht alle Zähler.</string>
+    <string name="setting_stats_desc">Zeigt, wie viel du liest. Ausschalten löscht alle Zähler.</string>
     <string name="section_advanced">Erweitert</string>
     <string name="advanced_desc">Archivdienst, Domain, Browser</string>
     <string name="setting_browser">Im Standardbrowser öffnen</string>

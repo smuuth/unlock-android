@@ -87,17 +87,14 @@
     <!-- Statistik -->
     <string name="stats_title">Statistics</string>
     <string name="stats_teaser_title">Your stats</string>
-    <string name="stats_teaser_body">%1$d unlocked · %2$s saved</string>
-    <string name="stats_teaser_empty">Your first unlocked article starts the stats.</string>
-    <string name="stats_hero_label">articles unlocked</string>
+    <string name="stats_teaser_body">%1$d opened</string>
+    <string name="stats_teaser_empty">Your first opened article starts the stats.</string>
+    <string name="stats_hero_label">articles opened</string>
     <string name="stats_since">since %1$s</string>
     <string name="stats_today">Today %1$d</string>
     <string name="stats_week">This week %1$d</string>
-    <string name="stats_empty_title">Nothing unlocked yet</string>
+    <string name="stats_empty_title">Nothing opened yet</string>
     <string name="stats_empty_body">Share an article with Unlock – your stats begin with the very first link.</string>
-    <string name="stats_saved_title">Money saved</string>
-    <string name="stats_saved_body">Estimate: %1$s per unlocked article instead of buying it or subscribing.</string>
-    <string name="stats_saved_price">Price per article</string>
     <string name="stats_streak">day streak</string>
     <string name="stats_streak_best">Record: %1$d days</string>
     <string name="stats_trackers">trackers removed</string>
@@ -113,8 +110,8 @@
     <string name="stats_range_week">7 days</string>
     <string name="stats_range_month">30 days</string>
     <string name="stats_range_year">12 months</string>
-    <string name="stats_avg_day">%1$d unlocks · Ø %2$s per day</string>
-    <string name="stats_avg_month">%1$d unlocks · Ø %2$s per month</string>
+    <string name="stats_avg_day">%1$d articles · Ø %2$s per day</string>
+    <string name="stats_avg_month">%1$d articles · Ø %2$s per month</string>
     <string name="stats_daytime">Time of day</string>
     <string name="stats_peak">Most active around %1$s</string>
     <string name="stats_chrono_early">Early bird</string>
@@ -127,7 +124,7 @@
     <string name="stats_weekdays">Weekdays</string>
     <string name="stats_fav_weekday">Favourite day: %1$s</string>
     <string name="stats_top_sites">Top sites</string>
-    <string name="stats_how">How you unlock</string>
+    <string name="stats_how">How you open articles</string>
     <string name="stats_services">Archives</string>
     <string name="stats_sources">Entry points</string>
     <string name="source_share">Share menu</string>
@@ -145,7 +142,7 @@
     <string name="stats_reset_confirm">Reset</string>
     <string name="stats_cancel">Cancel</string>
     <string name="stats_disabled_title">Statistics are off</string>
-    <string name="stats_disabled_body">Turn them on below to see how much you unlock. Everything stays on this device.</string>
+    <string name="stats_disabled_body">Turn them on below to see how much you read. Everything stays on this device.</string>
     <string name="stats_demo" translatable="false">Load demo data</string>
     <!-- Startseite & Einstellungen -->
     <string name="home_title">Open an article</string>
@@ -156,7 +153,7 @@
     <string name="setting_reader_desc">Opens articles in a clean, readable view. Off: they open in the browser.</string>
     <string name="section_privacy">Privacy</string>
     <string name="setting_stats">Statistics on this device</string>
-    <string name="setting_stats_desc">Shows how much you unlock. Turning it off deletes all counters.</string>
+    <string name="setting_stats_desc">Shows how much you read. Turning it off deletes all counters.</string>
     <string name="section_advanced">Advanced</string>
     <string name="advanced_desc">Archive service, domain, browser</string>
     <string name="setting_browser">Open in default browser</string>
