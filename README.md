@@ -71,6 +71,7 @@ Für optionale anonyme Nutzungsstatistiken über [TelemetryDeck](https://telemet
 ```
 app/src/main/java/dev/unlock/
 ├── UnlockApp.kt, MainActivity.kt
+├── analytics/  TelemetryClient, TelemetryEnvironment, TelemetrySessionStore
 ├── reader/     ReaderActivity, ReaderScreen, ArticleExtractorScript,
 │               ArticleParser, ArticleModels, ArticleImageLoader, ReaderThemePalette
 ├── share/      ShareActivity, ClipboardActivity, LinkProcessor, LinkOpener,

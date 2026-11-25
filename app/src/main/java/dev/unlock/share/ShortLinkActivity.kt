@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import dev.unlock.R
+import dev.unlock.unlockApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -31,10 +32,20 @@ class ShortLinkActivity : Activity() {
         val source = intent.getStringExtra(EXTRA_SOURCE) ?: "share"
         scope.launch {
             val resolved = withContext(Dispatchers.IO) { ShortLinkResolver.resolve(url) }
+            unlockApp.telemetry.track(
+                "Unlock.ShortLink.resolved",
+                mapOf("success" to (resolved != null).toString(), "source" to source),
+            )
             if (resolved == null) {
                 Toast.makeText(applicationContext, R.string.toast_short_link_failed, Toast.LENGTH_SHORT).show()
             }
-            ShareActivity.openFromTexts(this@ShortLinkActivity, listOf(resolved ?: url), source, resolveShortLinks = false)
+            ShareActivity.openFromTexts(
+                this@ShortLinkActivity,
+                listOf(resolved ?: url),
+                source,
+                resolveShortLinks = false,
+                wasShortLink = true,
+            )
             finishQuietly()
         }
     }

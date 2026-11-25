@@ -62,6 +62,7 @@ class UpdateManager(
     private val scope: CoroutineScope,
     private val installedVersion: String = BuildConfig.VERSION_NAME,
     private val latestReleaseUrl: String = LATEST_RELEASE_URL,
+    private val onTrackEvent: (String, Map<String, String>) -> Unit = { _, _ -> },
 ) {
     private val app = context.applicationContext
     private val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -90,6 +91,18 @@ class UpdateManager(
             result.onSuccess { release ->
                 val newer = release?.takeIf { AppVersion.isNewer(it.version, installedVersion) }
                 saveCheck(now, newer)
+                if (newer != null) {
+                    onTrackEvent(
+                        "Unlock.Update.available",
+                        mapOf("targetVersion" to newer.version, "manual" to manual.toString()),
+                    )
+                }
+                if (manual) {
+                    onTrackEvent(
+                        "Unlock.Update.checked",
+                        mapOf("result" to if (newer != null) "available" else "up_to_date"),
+                    )
+                }
                 _state.update {
                     it.copy(
                         available = newer,
@@ -103,6 +116,9 @@ class UpdateManager(
                     )
                 }
             }.onFailure {
+                if (manual) {
+                    onTrackEvent("Unlock.Update.checked", mapOf("result" to "failed"))
+                }
                 // Offline/Rate-Limit/Fehler: lautlos. Automatisch wird erst beim nächsten Start erneut geprüft.
                 _state.update {
                     it.copy(
@@ -158,9 +174,11 @@ class UpdateManager(
         val release = _state.value.available ?: return
         if (_state.value.phase == UpdateState.Phase.DOWNLOADING || _state.value.phase == UpdateState.Phase.INSTALLING) return
         if (!canInstall()) {
+            onTrackEvent("Unlock.Update.permissionNeeded", mapOf("targetVersion" to release.version))
             _state.update { it.copy(needsInstallPermission = true) }
             return
         }
+        onTrackEvent("Unlock.Update.started", mapOf("targetVersion" to release.version))
         _state.update { it.copy(phase = UpdateState.Phase.DOWNLOADING, progress = 0f, error = null, needsInstallPermission = false) }
         scope.launch(Dispatchers.IO) {
             val apk = runCatching { download(release) }.getOrNull()
@@ -178,8 +196,10 @@ class UpdateManager(
         }
     }
 
-    private fun fail(error: UpdateState.UpdateError) =
+    private fun fail(error: UpdateState.UpdateError) {
+        onTrackEvent("Unlock.Update.failed", mapOf("error" to error.name.lowercase()))
         _state.update { it.copy(phase = UpdateState.Phase.IDLE, progress = null, error = error) }
+    }
 
     private fun download(release: ReleaseInfo): File {
         val dir = File(app.cacheDir, "updates").apply { mkdirs() }
@@ -289,9 +309,15 @@ class UpdateManager(
     internal fun onInstallStatus(status: Int) {
         when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> Unit // Bestätigungsdialog wird gerade angezeigt
-            PackageInstaller.STATUS_SUCCESS -> _state.update { it.copy(phase = UpdateState.Phase.IDLE, available = null) }
+            PackageInstaller.STATUS_SUCCESS -> {
+                onTrackEvent("Unlock.Update.completed", emptyMap())
+                _state.update { it.copy(phase = UpdateState.Phase.IDLE, available = null) }
+            }
             // Abgebrochen: Hinweis einfach stehen lassen, ohne Fehlermeldung.
-            PackageInstaller.STATUS_FAILURE_ABORTED -> _state.update { it.copy(phase = UpdateState.Phase.IDLE, progress = null) }
+            PackageInstaller.STATUS_FAILURE_ABORTED -> {
+                onTrackEvent("Unlock.Update.aborted", emptyMap())
+                _state.update { it.copy(phase = UpdateState.Phase.IDLE, progress = null) }
+            }
             else -> fail(UpdateState.UpdateError.INSTALL_FAILED)
         }
     }

@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import dev.unlock.settings.ui.SettingsScreen
 import dev.unlock.ui.theme.UnlockTheme
+import dev.unlock.unlockApp
 
 /** Eigene Unterseite für alle Einstellungen – die Startseite bleibt dadurch schlank. */
 class SettingsActivity : ComponentActivity() {
@@ -20,6 +21,11 @@ class SettingsActivity : ComponentActivity() {
                 SettingsScreen(onBack = { finish() })
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        unlockApp.telemetry.trackNavigation("/settings")
     }
 
     companion object {

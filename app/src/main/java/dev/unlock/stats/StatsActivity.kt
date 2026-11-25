@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.unlock.UnlockApp
 import dev.unlock.stats.ui.StatsScreen
 import dev.unlock.ui.theme.UnlockTheme
+import dev.unlock.unlockApp
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -30,6 +31,11 @@ class StatsActivity : ComponentActivity() {
                 StatsScreen(onBack = { finish() })
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        unlockApp.telemetry.trackNavigation("/stats")
     }
 
     companion object {

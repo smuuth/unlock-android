@@ -59,7 +59,7 @@ class ReaderActivity : ComponentActivity() {
                         unlockApp.appScope.launch { repo.setReaderJustify(justify) }
                         unlockApp.telemetry.track("Unlock.Reader.appearanceChanged", mapOf("justify" to justify.toString()))
                     },
-                    onTrackEvent = { type, params -> unlockApp.telemetry.track(type, params) },
+                    onTrackEvent = { type, params, value -> unlockApp.telemetry.track(type, params, value) },
                     onArticleRead = { article ->
                         unlockApp.appScope.launch {
                             unlockApp.statsRepository.recordArticleRead(article.wordCount(), article.readingTimeMinutes)
@@ -78,6 +78,11 @@ class ReaderActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        unlockApp.telemetry.trackNavigation("/reader")
     }
 
     companion object {

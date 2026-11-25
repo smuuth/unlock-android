@@ -79,6 +79,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -112,6 +113,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.unlock.R
+import dev.unlock.analytics.TelemetryEnvironment
 import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveTarget
 import dev.unlock.archive.TargetUrlBuilder
@@ -138,7 +140,7 @@ fun ReaderScreen(
     onUpdateFont: (ReaderFont) -> Unit,
     onUpdateFontScale: (Float) -> Unit,
     onUpdateJustify: (Boolean) -> Unit,
-    onTrackEvent: (String, Map<String, String>) -> Unit = { _, _ -> },
+    onTrackEvent: (String, Map<String, String>, Double?) -> Unit = { _, _, _ -> },
     onArticleRead: (Article) -> Unit = {},
     onOpenInBrowser: (String) -> Unit,
     onShareUrl: (String) -> Unit,
@@ -146,6 +148,7 @@ fun ReaderScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val currentOnTrackEvent by rememberUpdatedState(onTrackEvent)
     val systemDark = isSystemInDarkTheme()
     val palette = readerPalette(settings.readerTheme, systemDark)
 
@@ -162,6 +165,10 @@ fun ReaderScreen(
     var mainFrameErrorUrl by remember { mutableStateOf<String?>(null) }
     // Pro Leseansicht nur einmal zählen, auch wenn erneut extrahiert wird.
     var articleCounted by remember { mutableStateOf(false) }
+    val openedAtMs = remember { System.currentTimeMillis() }
+    var hadInteraction by remember { mutableStateOf(false) }
+    var switchedToOriginal by remember { mutableStateOf(false) }
+    var maxReadingProgress by remember { mutableFloatStateOf(0f) }
 
     val listState = rememberLazyListState()
     val readingProgress by remember {
@@ -177,6 +184,12 @@ fun ReaderScreen(
 
     val showingArticle = state is ReaderState.ArticleReady && !forceWebView
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    LaunchedEffect(showingArticle, readingProgress) {
+        if (showingArticle && readingProgress > maxReadingProgress) {
+            maxReadingProgress = readingProgress
+        }
+    }
 
     fun loadUrlInWebView(url: String) {
         extractionJob?.cancel()
@@ -194,19 +207,19 @@ fun ReaderScreen(
     }
 
     fun switchToWayback() {
-        onTrackEvent("Unlock.Reader.action", mapOf("action" to "wayback"))
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "wayback"), null)
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.WAYBACK))
     }
 
     fun switchToNextDomain() {
         val next = nextDomain()
         currentDomain = next
-        onTrackEvent("Unlock.Reader.action", mapOf("action" to "other_domain"))
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "other_domain"), null)
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.ARCHIVE_TODAY_NEWEST, next))
     }
 
     fun submitFreshSnapshot() {
-        onTrackEvent("Unlock.Reader.action", mapOf("action" to "rearchive"))
+        onTrackEvent("Unlock.Reader.action", mapOf("action" to "rearchive"), null)
         loadUrlInWebView(TargetUrlBuilder.build(originalUrl, ArchiveTarget.ARCHIVE_TODAY_SUBMIT, currentDomain))
     }
 
@@ -225,26 +238,45 @@ fun ReaderScreen(
                             onArticleRead(result.article)
                         }
                         val service = if ("web.archive.org" in loadedUrl) "wayback" else "archive.today"
+                        val wordCount = result.article.wordCount()
+                        val hasImages = result.article.blocks.any { it is ArticleBlock.Image }
                         onTrackEvent(
                             "Unlock.Reader.extracted",
-                            mapOf(
-                                "service" to service,
-                                "theme" to settings.readerTheme.id,
-                                "font" to settings.readerFont.id,
-                            ),
+                            buildMap {
+                                put("service", service)
+                                if (service == "archive.today") put("domain", currentDomain.host)
+                                put("theme", settings.readerTheme.id)
+                                put("font", settings.readerFont.id)
+                                put("justify", settings.readerJustify.toString())
+                                put("fontScale", TelemetryEnvironment.formatDecimal(settings.readerFontScale))
+                                put("hasImages", hasImages.toString())
+                                put("afterInteraction", hadInteraction.toString())
+                                put("readingTimeMinutes", result.article.readingTimeMinutes.toString())
+                                put("wordCountBucket", wordCountBucket(wordCount))
+                            },
+                            result.article.readingTimeMinutes.toDouble(),
                         )
                     }
                     is ExtractionResult.NeedsInteraction -> {
                         forceWebView = false
+                        hadInteraction = true
                         state = ReaderState.Interactive(result.reason)
+                        val domainLabel = if ("web.archive.org" in loadedUrl) "wayback" else currentDomain.host
                         onTrackEvent(
                             "Unlock.Reader.interaction",
-                            mapOf("reason" to result.reason.name.lowercase()),
+                            mapOf("reason" to result.reason.name.lowercase(), "domain" to domainLabel),
+                            null,
                         )
                     }
                     ExtractionResult.NotAnArticle -> {
+                        hadInteraction = true
                         state = ReaderState.Interactive(null)
-                        onTrackEvent("Unlock.Reader.interaction", mapOf("reason" to "not_article"))
+                        val domainLabel = if ("web.archive.org" in loadedUrl) "wayback" else currentDomain.host
+                        onTrackEvent(
+                            "Unlock.Reader.interaction",
+                            mapOf("reason" to "not_article", "domain" to domainLabel),
+                            null,
+                        )
                     }
                 }
             }
@@ -257,6 +289,16 @@ fun ReaderScreen(
             webViewRef?.stopLoading()
             webViewRef?.destroy()
             webViewRef = null
+            val durationSeconds = ((System.currentTimeMillis() - openedAtMs) / 1000L).coerceIn(0L, 7200L)
+            val params = buildMap {
+                put("extracted", articleCounted.toString())
+                put("hadInteraction", hadInteraction.toString())
+                put("switchedToOriginal", switchedToOriginal.toString())
+                if (articleCounted) {
+                    put("scrollDepthBucket", scrollDepthBucket(maxReadingProgress))
+                }
+            }
+            currentOnTrackEvent("Unlock.Reader.sessionEnded", params, durationSeconds.toDouble())
         }
     }
 
@@ -295,14 +337,26 @@ fun ReaderScreen(
                     actions = {
                         if (state is ReaderState.ArticleReady) {
                             if (!forceWebView) {
-                                IconButton(onClick = { showAppearanceSheet = true }) {
+                                IconButton(onClick = {
+                                    showAppearanceSheet = true
+                                    onTrackEvent("Unlock.Reader.action", mapOf("action" to "appearance_opened"), null)
+                                }) {
                                     Icon(
                                         painterResource(R.drawable.ic_text_format),
                                         stringResource(R.string.reader_appearance),
                                     )
                                 }
                             }
-                            IconButton(onClick = { forceWebView = !forceWebView }) {
+                            IconButton(onClick = {
+                                val nextForceWebView = !forceWebView
+                                forceWebView = nextForceWebView
+                                if (nextForceWebView) switchedToOriginal = true
+                                onTrackEvent(
+                                    "Unlock.Reader.action",
+                                    mapOf("action" to if (nextForceWebView) "toggle_original" else "toggle_reader"),
+                                    null,
+                                )
+                            }) {
                                 Icon(
                                     painterResource(if (forceWebView) R.drawable.ic_article else R.drawable.ic_web),
                                     stringResource(if (forceWebView) R.string.reader_show_reader else R.string.reader_show_original),
@@ -348,6 +402,7 @@ fun ReaderScreen(
                                     leadingIcon = { Icon(painterResource(R.drawable.ic_share), null) },
                                     onClick = {
                                         showOverflowMenu = false
+                                        onTrackEvent("Unlock.Reader.action", mapOf("action" to "share"), null)
                                         onShareUrl(currentArchiveUrl)
                                     },
                                 )
@@ -356,6 +411,7 @@ fun ReaderScreen(
                                     leadingIcon = { Icon(painterResource(R.drawable.ic_open_in_new), null) },
                                     onClick = {
                                         showOverflowMenu = false
+                                        onTrackEvent("Unlock.Reader.action", mapOf("action" to "open_browser"), null)
                                         onOpenInBrowser(currentArchiveUrl)
                                     },
                                 )
@@ -399,7 +455,10 @@ fun ReaderScreen(
                         onArchiveNow = ::submitFreshSnapshot,
                         onTryWayback = ::switchToWayback,
                         onTryOtherDomain = ::switchToNextDomain,
-                        onRetry = { loadUrlInWebView(currentArchiveUrl) },
+                        onRetry = {
+                            onTrackEvent("Unlock.Reader.action", mapOf("action" to "retry"), null)
+                            loadUrlInWebView(currentArchiveUrl)
+                        },
                     )
                 }
                 AndroidView(
@@ -436,8 +495,14 @@ fun ReaderScreen(
                                 mainFrameErrorUrl = failedUrl.ifBlank { currentArchiveUrl }
                                 extractionJob?.cancel()
                                 forceWebView = false
+                                hadInteraction = true
                                 state = ReaderState.Interactive(InteractionReason.LOAD_ERROR)
-                                onTrackEvent("Unlock.Reader.interaction", mapOf("reason" to "load_error"))
+                                val domainLabel = if ("web.archive.org" in currentArchiveUrl) "wayback" else currentDomain.host
+                                onTrackEvent(
+                                    "Unlock.Reader.interaction",
+                                    mapOf("reason" to "load_error", "domain" to domainLabel),
+                                    null,
+                                )
                             },
                         ).also { wv ->
                             webViewRef = wv
@@ -480,7 +545,11 @@ fun ReaderScreen(
                         )
                         Spacer(Modifier.height(24.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = { forceWebView = true }) {
+                            TextButton(onClick = {
+                                forceWebView = true
+                                switchedToOriginal = true
+                                onTrackEvent("Unlock.Reader.action", mapOf("action" to "toggle_original"), null)
+                            }) {
                                 Text(stringResource(R.string.reader_show_original))
                             }
                             TextButton(onClick = ::switchToWayback) {
@@ -503,9 +572,16 @@ fun ReaderScreen(
                     userAgent = userAgent,
                     listState = listState,
                     onOpenLink = onOpenInBrowser,
-                    onShowOriginal = { forceWebView = true },
+                    onShowOriginal = {
+                        forceWebView = true
+                        switchedToOriginal = true
+                        onTrackEvent("Unlock.Reader.action", mapOf("action" to "toggle_original"), null)
+                    },
                     onSwitchWayback = ::switchToWayback,
-                    onShare = { onShareUrl(currentArchiveUrl) },
+                    onShare = {
+                        onTrackEvent("Unlock.Reader.action", mapOf("action" to "share"), null)
+                        onShareUrl(currentArchiveUrl)
+                    },
                 )
             }
         }
@@ -520,6 +596,13 @@ fun ReaderScreen(
             onSelectTheme = onUpdateTheme,
             onSelectFont = onUpdateFont,
             onChangeFontScale = onUpdateFontScale,
+            onCommitFontScale = { scale ->
+                onTrackEvent(
+                    "Unlock.Reader.appearanceChanged",
+                    mapOf("fontScale" to TelemetryEnvironment.formatDecimal(scale)),
+                    null,
+                )
+            },
             onChangeJustify = onUpdateJustify,
             onDismiss = { showAppearanceSheet = false },
         )
@@ -1009,10 +1092,12 @@ private fun AppearanceBottomSheet(
     onSelectTheme: (ReaderTheme) -> Unit,
     onSelectFont: (ReaderFont) -> Unit,
     onChangeFontScale: (Float) -> Unit,
+    onCommitFontScale: (Float) -> Unit,
     onChangeJustify: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var latestScale by remember(currentFontScale) { mutableFloatStateOf(currentFontScale) }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -1129,9 +1214,11 @@ private fun AppearanceBottomSheet(
                     Slider(
                         value = currentFontScale,
                         onValueChange = { v ->
-                            val stepped = (v * 20f).roundToInt() / 20f
-                            onChangeFontScale(stepped.coerceIn(0.85f, 1.45f))
+                            val stepped = ((v * 20f).roundToInt() / 20f).coerceIn(0.85f, 1.45f)
+                            latestScale = stepped
+                            onChangeFontScale(stepped)
                         },
+                        onValueChangeFinished = { onCommitFontScale(latestScale) },
                         valueRange = 0.85f..1.45f,
                         steps = 11,
                         modifier = Modifier.weight(1f),
@@ -1166,4 +1253,19 @@ private fun AppearanceBottomSheet(
             }
         }
     }
+}
+
+private fun wordCountBucket(words: Int): String = when {
+    words < 300 -> "<300"
+    words < 800 -> "300-800"
+    words < 1500 -> "800-1500"
+    else -> "1500+"
+}
+
+private fun scrollDepthBucket(progress: Float): String = when {
+    progress < 0.1f -> "0%"
+    progress < 0.4f -> "25%"
+    progress < 0.65f -> "50%"
+    progress < 0.9f -> "75%"
+    else -> "100%"
 }
