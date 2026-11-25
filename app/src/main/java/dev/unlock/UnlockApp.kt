@@ -21,10 +21,12 @@ class UnlockApp : Application() {
     /** Lokale Statistik – bleibt ausschließlich auf dem Gerät. */
     val statsRepository by lazy { StatsRepository(this) }
 
-    val telemetry by lazy { TelemetryClient(settingsRepository, appScope) }
+    val telemetry by lazy { TelemetryClient(this, settingsRepository, appScope) }
 
     /** Selbst-Update über GitHub Releases. */
-    val updates by lazy { UpdateManager(this, appScope) }
+    val updates by lazy {
+        UpdateManager(this, appScope, onTrackEvent = { type, params -> telemetry.track(type, params) })
+    }
 
     override fun onCreate() {
         super.onCreate()

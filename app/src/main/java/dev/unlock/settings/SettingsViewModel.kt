@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.unlock.UnlockApp
+import dev.unlock.analytics.TelemetryClient
 import dev.unlock.archive.ArchiveDomain
 import dev.unlock.archive.ArchiveTarget
 import dev.unlock.stats.StatsRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val repo: SettingsRepository,
     private val statsRepository: StatsRepository,
+    private val telemetry: TelemetryClient,
 ) : ViewModel() {
 
     /** `null` solange DataStore noch nicht gelesen wurde (→ LoadingIndicator). */
@@ -31,14 +33,46 @@ class SettingsViewModel(
     val stats: StateFlow<UnlockStats?> =
         statsRepository.stats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun setTarget(value: ArchiveTarget) = update { repo.setTarget(value) }
-    fun setDomain(value: ArchiveDomain) = update { repo.setDomain(value) }
-    fun setCleanUrls(value: Boolean) = update { repo.setCleanUrls(value) }
-    fun setNormalizeAmp(value: Boolean) = update { repo.setNormalizeAmp(value) }
-    fun setOpenMode(value: OpenMode) = update { repo.setOpenMode(value) }
-    fun setHistoryEnabled(value: Boolean) = update { repo.setHistoryEnabled(value) }
-    fun setAnalyticsEnabled(value: Boolean) = update { repo.setAnalyticsEnabled(value) }
-    fun setStatsEnabled(value: Boolean) = update { statsRepository.setEnabled(value) }
+    fun setTarget(value: ArchiveTarget) {
+        update { repo.setTarget(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "target", "value" to value.id))
+    }
+
+    fun setDomain(value: ArchiveDomain) {
+        update { repo.setDomain(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "domain", "value" to value.host))
+    }
+
+    fun setCleanUrls(value: Boolean) {
+        update { repo.setCleanUrls(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "cleanUrls", "value" to value.toString()))
+    }
+
+    fun setNormalizeAmp(value: Boolean) {
+        update { repo.setNormalizeAmp(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "normalizeAmp", "value" to value.toString()))
+    }
+
+    fun setOpenMode(value: OpenMode) {
+        update { repo.setOpenMode(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "openMode", "value" to value.id))
+    }
+
+    fun setHistoryEnabled(value: Boolean) {
+        update { repo.setHistoryEnabled(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "historyEnabled", "value" to value.toString()))
+    }
+
+    fun setAnalyticsEnabled(value: Boolean) = update {
+        repo.setAnalyticsEnabled(value)
+        if (!value) telemetry.clearLocalState()
+    }
+
+    fun setStatsEnabled(value: Boolean) {
+        update { statsRepository.setEnabled(value) }
+        telemetry.track("Unlock.Settings.changed", mapOf("setting" to "statsEnabled", "value" to value.toString()))
+    }
+
     fun clearHistory() = update { repo.clearHistory() }
 
     private fun update(block: suspend () -> Unit) {
@@ -49,7 +83,7 @@ class SettingsViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as UnlockApp
-                SettingsViewModel(app.settingsRepository, app.statsRepository)
+                SettingsViewModel(app.settingsRepository, app.statsRepository, app.telemetry)
             }
         }
     }

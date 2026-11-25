@@ -47,6 +47,7 @@ class ShareActivity : Activity() {
             texts: List<String?>,
             source: String = "share",
             resolveShortLinks: Boolean = true,
+            wasShortLink: Boolean = false,
         ): Boolean {
             if (resolveShortLinks) {
                 // Google-Kurzlinks (Discover/Google-App) erst im Hintergrund auflösen.
@@ -61,34 +62,45 @@ class ShareActivity : Activity() {
             val settings = app.settingsRepository.current()
             val result = LinkProcessor.process(texts, settings)
             if (result == null) {
+                app.telemetry.track("Unlock.Article.failed", mapOf("reason" to "no_link", "source" to source))
                 Toast.makeText(activity.applicationContext, R.string.toast_no_link, Toast.LENGTH_SHORT).show()
                 return false
             }
             if (!LinkOpener.open(activity, result.targetUrl, result.cleanedUrl, settings.domain, settings.openMode)) {
+                app.telemetry.track("Unlock.Article.failed", mapOf("reason" to "no_browser", "source" to source))
                 Toast.makeText(activity.applicationContext, R.string.toast_no_browser, Toast.LENGTH_SHORT).show()
                 return false
             }
             val effectiveTarget = settings.target
-            if (!settings.hasUnlocked) {
+            val isFirstUnlock = !settings.hasUnlocked
+            if (isFirstUnlock) {
                 // Einmalig merken: danach blendet die Startseite die Schritt-für-Schritt-Anleitung aus.
                 app.appScope.launch { app.settingsRepository.markUnlocked() }
             }
+            val trackersRemoved = StatsMath.removedParams(result.originalUrl, result.cleanedUrl)
+            val isArchive = ArchiveUrls.isArchiveUrl(result.cleanedUrl)
             app.telemetry.track(
                 "Unlock.Article.opened",
-                mapOf(
-                    "openMode" to settings.openMode.id,
-                    "service" to effectiveTarget.service.name.lowercase(),
-                    "target" to effectiveTarget.id,
-                    "source" to source,
-                ),
+                buildMap {
+                    put("openMode", settings.openMode.id)
+                    put("service", effectiveTarget.service.name.lowercase())
+                    put("target", effectiveTarget.id)
+                    if (effectiveTarget.usesArchiveDomain) put("domain", settings.domain.host)
+                    put("source", source)
+                    put("hadTrackersRemoved", (trackersRemoved > 0).toString())
+                    put("wasShortLink", wasShortLink.toString())
+                    put("wasArchiveUrl", isArchive.toString())
+                    put("firstUnlock", isFirstUnlock.toString())
+                },
+                floatValue = trackersRemoved.toDouble(),
             )
             app.appScope.launch {
                 app.statsRepository.record(
                     UnlockEvent(
                         source = source,
                         service = effectiveTarget.service.name.lowercase(),
-                        host = result.cleanedUrl.takeUnless(ArchiveUrls::isArchiveUrl)?.let(StatsMath::hostOf),
-                        trackersRemoved = StatsMath.removedParams(result.originalUrl, result.cleanedUrl),
+                        host = if (isArchive) null else StatsMath.hostOf(result.cleanedUrl),
+                        trackersRemoved = trackersRemoved,
                     ),
                 )
             }

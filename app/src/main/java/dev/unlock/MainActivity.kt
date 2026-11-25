@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        unlockApp.telemetry.trackNavigation("/home")
         // Browser im Hintergrund aufwärmen, damit „Öffnen“ auf der Startseite sofort reagiert.
         LinkOpener.warmUp(this)
         // Höchstens etwa einmal am Tag bei GitHub nach einer neuen Version fragen (offline: lautlos).
