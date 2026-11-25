@@ -15,14 +15,14 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = Application::class)
 class TelemetrySessionStoreTest {
 
     private val app: Application = ApplicationProvider.getApplicationContext()
     private lateinit var store: TelemetrySessionStore
 
     @Before fun setUp() {
-        store = TelemetrySessionStore(app)
+        store = TelemetrySessionStore(app, prefsName = "telemetry_state_test")
         store.clear()
     }
 
