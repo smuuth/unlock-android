@@ -16,7 +16,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = Application::class)
 class TelemetryEnvironmentTest {
 
     private val app: Application = ApplicationProvider.getApplicationContext()

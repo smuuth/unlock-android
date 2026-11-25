@@ -13,7 +13,10 @@ import java.util.UUID
  * Speichert ausschließlich anonyme Zähler und Datumsangaben (keine URLs, keine PII)
  * und wird beim Opt-out vollständig gelöscht.
  */
-class TelemetrySessionStore(context: Context) {
+class TelemetrySessionStore(
+    context: Context,
+    prefsName: String = PREFS_NAME,
+) {
 
     data class SessionTouchResult(
         val sessionId: String,
@@ -23,7 +26,7 @@ class TelemetrySessionStore(context: Context) {
     )
 
     private val prefs: SharedPreferences =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     private var activeSessionId: String? = null
     private var activeSessionStartMs: Long = 0L

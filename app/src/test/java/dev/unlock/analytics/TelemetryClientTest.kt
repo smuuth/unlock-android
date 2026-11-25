@@ -23,7 +23,7 @@ import java.time.ZoneId
 import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = Application::class)
 class TelemetryClientTest {
 
     private val app: Application = ApplicationProvider.getApplicationContext()
